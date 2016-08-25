@@ -9,7 +9,6 @@
   "scripts": {
     "build": "ember build",
     "start": "ember server",
-    "test": "npm run lint && ember test",
     "lint": "eslint *.js addon app config tests"
   },
   "repository": "git@github.com:ciena-frost/ember-frost-lts.git",

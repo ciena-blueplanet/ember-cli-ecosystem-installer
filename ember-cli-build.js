@@ -10,10 +10,7 @@ module.exports = function (defaults) {
       useLintTree: false
     },
     sassOptions: {
-      includePaths: [
-        'node_modules/ember-frost-css-core/scss',
-        'node_modules/ember-frost-theme/scss'
-      ]
+      includePaths: []
     }
   })
 

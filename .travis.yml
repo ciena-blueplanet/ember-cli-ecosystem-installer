@@ -16,9 +16,7 @@ install:
 - npm install
 - bower install
 after_success:
-- sed -i -- 's/SF:ember-frost-lts\/\(.*\)/SF:addon\/\1.js/' coverage/lcov.info &&
-  rm -f coverage/lcov.info--
-- cat coverage/lcov.info | coveralls
+- .travis/publish-coverage.sh
 addons:
   apt:
     sources:

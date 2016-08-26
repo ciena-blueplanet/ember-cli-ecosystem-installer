@@ -1,4 +1,5 @@
 'use strict'
+
 let lts = require('../../lts.json')
 
 module.exports = {

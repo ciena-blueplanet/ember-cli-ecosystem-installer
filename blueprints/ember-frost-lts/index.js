@@ -1,6 +1,6 @@
 'use strict'
 
-let lts = require('../../lts.json')
+const lts = require('../../lts.json')
 
 module.exports = {
   description: 'Install requested packages of an LTS',
@@ -9,7 +9,7 @@ module.exports = {
    * Query the user to determine which packages/groups he wants to install.
    * @returns a list of the packages to install
    */
-  afterInstall: function () {
+  afterInstall: function (options) {
     const self = this
 
     console.log('Would you like to install the following packages:')

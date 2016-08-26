@@ -21,17 +21,29 @@
 ember install ember-frost-lts
 ```
 
-## API
+On the install or generate the user will be requested to install packages/groups of packages. 
 
-| Attribute | Type | Value | Description |
-| --------- | ---- | ----- | ----------- |
-| ` ` | ` ` | ` ` | Coming soon |
+If the user answer y or yes the package or group of package will be installed and otherwise it will not be installed.
 
 ## Examples
 
 ### Example
-```handlebars
-Coming soon
+In the following example the package1, package2 and package3 will be installed.
+```bash
+ember g ember-frost-lts
+installing ember-frost-lts
+Would you like to install the following packages:
+? group-name (package1@package-version, package2@package-version) ? Yes
+? package3@package-version ? Yes
+```
+
+If there is any invalid package/group in your lts.json file you will get the following error message
+```bash
+ember g ember-frost-lts
+installing ember-frost-lts
+Would you like to install the following packages:
+Invalid package: package1
+Invalid group: package2
 ```
 
 ## Development
@@ -40,6 +52,18 @@ Coming soon
 git clone git@github.com:ciena-frost/ember-frost-lts.git
 cd ember-frost-lts
 npm install && bower install
+```
+### Add new packages/groups to install
+If you want to add new packages/groups to install you simply have to modify the lts.json file and use the following format:
+```json
+{
+  "group-name": {
+    "packages": {
+      "package-name": "package-version"
+    }
+  },
+  "package-name": "package-version"
+}
 ```
 
 ### Development Server

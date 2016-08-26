@@ -21,18 +21,7 @@
 ember install ember-frost-lts
 ```
 
-## API
-
-| Attribute | Type | Value | Description |
-| --------- | ---- | ----- | ----------- |
-| ` ` | ` ` | ` ` | Coming soon |
-
-## Examples
-
-### Example
-```handlebars
-Coming soon
-```
+## Usage
 
 ## Development
 ### Setup

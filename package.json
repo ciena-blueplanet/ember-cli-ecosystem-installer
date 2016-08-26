@@ -44,7 +44,9 @@
   "keywords": [
     "ember-addon",
     "frost",
-    "long-term-support"
+    "long-term-support",
+    "lts",
+    "blueprint"
   ],
   "dependencies": {
     "ember-cli-babel": "^5.1.5",

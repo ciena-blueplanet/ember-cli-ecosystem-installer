@@ -21,6 +21,7 @@
 ember install ember-frost-lts
 ```
 
+<<<<<<< HEAD
 On the install or generate the user will be requested to install packages/groups of packages. 
 
 If the user answer y or yes the package or group of package will be installed and otherwise it will not be installed.
@@ -45,6 +46,9 @@ Would you like to install the following packages:
 Invalid package: package1
 Invalid group: package2
 ```
+=======
+## Usage
+>>>>>>> master
 
 ## Development
 ### Setup

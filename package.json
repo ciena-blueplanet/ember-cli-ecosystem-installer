@@ -1,6 +1,6 @@
 {
   "name": "ember-frost-lts",
-  "version": "0.0.0",
+  "version": "0.1.5",
   "description": "The default blueprint for ember-cli addons.",
   "directories": {
     "doc": "doc",
@@ -27,8 +27,8 @@
     "ember-cli-mirage": "0.2.1",
     "ember-cli-mocha": "^0.10.0",
     "ember-cli-notifications": "^3.2.0",
+    "ember-cli-test-loader": "^1.1.0",
     "ember-cli-uglify": "^1.2.0",
-    "ember-data": "^2.5.3",
     "ember-disable-proxy-controllers": "^1.0.1",
     "ember-export-application-global": "^1.0.4",
     "ember-load-initializers": "^0.5.0",
@@ -38,8 +38,7 @@
     "ember-try": "^0.1.2",
     "eslint": "^3.0.1",
     "eslint-config-frost-standard": "^3.0.0",
-    "loader.js": "^4.0.0",
-    "ember-cli-test-loader": "^1.1.0"
+    "loader.js": "^4.0.0"
   },
   "keywords": [
     "ember-addon",

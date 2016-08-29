@@ -1,0 +1,7 @@
+{
+  "package3": {
+    "packages": {
+      "my-package": "0.2.0"
+    }
+  }
+}

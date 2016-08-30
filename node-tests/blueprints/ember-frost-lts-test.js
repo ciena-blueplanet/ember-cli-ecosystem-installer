@@ -120,3 +120,5 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         .to.contain('ember-d3@0.2.0'))
   })
 })
+
+// check the size of the array to make sure to not have extra packages

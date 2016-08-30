@@ -18,7 +18,7 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
-    let groupsNPkgs = this.getGroupsNPkgs(options.ltsFile)
+    let groupsNPkgs = this.getGroupsNPkgs(options)
     if (groupsNPkgs) {
       return this.ui.prompt(this.getQuestions(groupsNPkgs)).then((answers) => {
         let packages = []
@@ -30,7 +30,10 @@ module.exports = {
           if (answer) {
             const groupNPkg = groupsNPkgs[name]
             // Get the package or the packages of a group.
-            packages = packages.concat(this.getPackages(name, groupNPkg))
+            let pkgs = this.getPackagesToInstall(name, groupNPkg)
+            if (pkgs) {
+              packages = packages.concat(pkgs)
+            }
           }
         }
 
@@ -41,18 +44,6 @@ module.exports = {
         }
       })
     }
-  },
-  /**
-   * Get a the packages and group of packages.
-   * @param {string} ltsFilePath the path of the lts file
-   * @returns {object} the packages and group of packages
-   */
-  getGroupsNPkgs (ltsFilePath) {
-    let ltsFile = defaultLtsFile
-    if (ltsFilePath.trim() !== '') {
-      ltsFile = require(`../../${ltsFilePath}`)
-    }
-    return ltsFile
   },
   /**
    * Get a the questions we will ask to the user.
@@ -99,7 +90,7 @@ module.exports = {
       if (packages && packages.length > 0) {
         return `${name} (${packages.join(', ')}) ?`
       } else {
-        console.log(`Invalid group: ${name}`)
+        console.log(`Nothing to install in ${name}`)
       }
     } else {
       let pkg = this.getPackageToStr(name, groupNPkg)
@@ -116,31 +107,39 @@ module.exports = {
    * @param {object} groupNPkg the package/group
    * @returns {array} a package or a list of packages
    */
-  getPackages (name, groupNPkg) {
+  getPackagesToInstall (name, groupNPkg) {
     if (this.isGroup(groupNPkg)) {
-      return this.getGroupPackages(groupNPkg, this.getPackage)
+      return this.getGroupPackages(groupNPkg, this.getPackageToInstall)
     } else {
-      return this.getPackage(name, groupNPkg)
+      return this.getPackageToInstall(name, groupNPkg)
     }
   },
   /**
    * Get a package object.
    * @param {string} name the name of the package
-   * @param {string} target the version of the package
+   * @param {object} pkg the package information
    * @returns {object} the package object
    */
-  getPackage (name, target) {
-    return {name, target}
+  getPackageToInstall (name, pkg) {
+    if (name && pkg && pkg.target && pkg.target !== pkg.installedTarget) {
+      return {name, target: pkg.target}
+    }
   },
   /**
    * Get a package to string.
    * @param {string} name the name of the package
-   * @param {string} target the version of the package
+   * @param {object} pkg the package information
    * @returns {string} the package to string
    */
-  getPackageToStr (name, target) {
-    if (name && target && typeof name === 'string' && typeof target === 'string') {
-      return name + '@' + target
+  getPackageToStr (name, pkg) {
+    if (name && pkg && pkg.target &&
+        typeof name === 'string' && typeof pkg.target === 'string') {
+      const pkgToStr = name + '@' + pkg.target
+      if (pkg.installedTarget !== pkg.target) {
+        return pkgToStr
+      } else {
+        console.log(`Package already installed: ${pkgToStr}`)
+      }
     }
   },
   /**
@@ -151,8 +150,12 @@ module.exports = {
    */
   getGroupPackages (group, getPackage) {
     let packages = []
-    for (let name in group.packages) {
-      packages.push(getPackage(name, group.packages[name]))
+    let groupPkgs = this.getGroupPkgs(group)
+    for (let name in groupPkgs) {
+      const pkg = getPackage(name, groupPkgs[name])
+      if (pkg) {
+        packages.push(pkg)
+      }
     }
     return packages
   },
@@ -162,6 +165,107 @@ module.exports = {
    * @returns {boolean} true if it's a group and false otherwise.
    */
   isGroup (group) {
-    return group.packages !== undefined
+    return this.getGroupPkgs(group) !== undefined
+  },
+  /**
+   * Get the packages form a group
+   * @param {oject} group a group
+   * @returns {array} a list of packages
+   */
+  getGroupPkgs (group) {
+    return group.packages
+  },
+  /**
+   * Get a the packages and group of packages.
+   * @param {object} options all the options
+   * @returns {object} the packages and group of packages
+   */
+  getGroupsNPkgs (options) {
+    let requestedGroupsNPkgs = this.getRequestedGroupsNPkgs(options)
+    let existingPkgs = this.getExistingPkgs(options)
+    return this.createGroupsNPkgs(requestedGroupsNPkgs, existingPkgs)
+  },
+  /**
+   * Get a the existing packages in the application/addon.
+   * @returns {array} the existing packages
+   * @param {object} options all the options
+   */
+  getExistingPkgs (options) {
+    return options.project.pkg.devDependencies
+  },
+  /**
+   * Get a the requested packages to install in the application/addon.
+   * @param {object} options all the options
+   * @returns {object} the requested packages
+   */
+  getRequestedGroupsNPkgs (options) {
+    let ltsFilePath = options.ltsFile
+    let ltsFile = defaultLtsFile
+    if (ltsFilePath.trim() !== '') {
+      ltsFile = require(`../../${ltsFilePath}`)
+    }
+    return ltsFile
+  },
+  /**
+   * Create the packages and group of packages based on the requested and existing packages.
+   * @param {object} requestedGroupsNPkgs the requested pckages and group of packages
+   * @param {object} existingPkgs the existing pckages
+   * @returns {object} the packages and group of packages
+   */
+  createGroupsNPkgs (requestedGroupsNPkgs, existingPkgs) {
+    let groupsNPkgs = {}
+    for (let groupNPkgName in requestedGroupsNPkgs) {
+      let pkgs = {}
+
+      const requestGroupNPkg = requestedGroupsNPkgs[groupNPkgName]
+      if (this.isGroup(requestGroupNPkg)) {
+        const requestedPkgs = this.getGroupPkgs(requestGroupNPkg)
+        for (let pkgName in requestedPkgs) {
+          pkgs[pkgName] = this.createPkg(pkgName, requestedPkgs[pkgName], existingPkgs)
+        }
+
+        groupsNPkgs[groupNPkgName] = this.createGroup(pkgs)
+      } else {
+        groupsNPkgs[groupNPkgName] = this.createPkg(groupNPkgName, requestedGroupsNPkgs[groupNPkgName], existingPkgs)
+      }
+    }
+
+    return groupsNPkgs
+  },
+  /**
+   * Create a group.
+   * @param {object} packages contains a all the packages for a group
+   * @returns {object} a group
+   */
+  createGroup (packages) {
+    let group = {}
+    group['packages'] = packages
+    return group
+  },
+  /**
+   * Create a package.
+   * @param {string} name the name of the package
+   * @param {string} requestedTarget the requested target for the package
+   * @param {object} existingPkgs the existing packages
+   * @returns {object} a package
+   */
+  createPkg (name, requestedTarget, existingPkgs) {
+    const existingTarget = existingPkgs[name]
+    return {
+      target: requestedTarget,
+      installedTarget: existingTarget
+    }
   }
 }
+
+// add tests
+// - New packages
+//     - Accept or reject any changes
+//     - Show the diff. to tell what's new
+// - Already have the packages
+//     - Not on LTS
+//         - Handle like new packages
+//     - Already on an LTS
+//         - Automatically update to the latest the packages
+//           you already have
+//         - Show the user the packages you updated

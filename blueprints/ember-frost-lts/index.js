@@ -5,7 +5,11 @@ const _ = require('lodash')
 
 const defaultLtsFile = require('../../lts.json')
 
-const ANSWERS = { OVERWRITE: 'overwrite', SKIP: 'skip', IDENTICAL: 'identical'}
+const ANSWERS = {
+  OVERWRITE: 'overwrite',
+  SKIP: 'skip',
+  IDENTICAL: 'identical'
+}
 
 module.exports = {
   description: 'Install requested packages of an LTS',
@@ -23,42 +27,36 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
-    let groupsNPkgs = this.getGroupsNPkgs(options)
-    if (groupsNPkgs) {
-      // const installedGroupsNPkgs = this.getInstalled()
-      // let groupsNPkgsUserInputRequired = this.removeAlreadyInstalled(groupsNPkgs, installedGroupsNPkgs)
-      // if (this.isOnLts()) {
-      //   groupsNPkgsUserInputRequired = this.getGroupsNPkgsUserInputRequired(groupsNPkgsUserInputRequired)
-      // }
-      let groupsNPkgsUserInputRequired = this.getGroupsNPkgsUserInputRequired(groupsNPkgs, this.isPkgInstallationRequired)
-      const questionsPerGroupNPkg = this.getQuestionsPerGroupNPkg(groupsNPkgsUserInputRequired)
+    let groups = this.getGroups(options)
+    if (groups) {
+      // Get the groups that need to be installed and required user input
+      const groupsRequireInstallation = this.getGroupsMatchingCondition(groups, this.isPkgInstallationRequired)
+      let groupRequireUserInput = groupsRequireInstallation
+      if (this.isOnLts()) {
+        groupRequireUserInput = this.getGroupsMatchingCondition(groupRequireUserInput, this.isUserInputRequired)
+      }
+
+      // Get the messages to prompt the user with
+      const messagesPerGroup = this.getMessagesPerGroup(groupRequireUserInput)
       // TODO validate that if we don't need user input we will still go here
-      return this.promptUser(questionsPerGroupNPkg).then((answers) => {
+      return this.promptUser(messagesPerGroup).then((answers) => {
         let packages = []
 
-        for (let name in groupsNPkgs) {
-          let answer = answers[name]
-          const groupNPkg = groupsNPkgs[name]
+        for (let name in groups) {
+          let answer = this.getAnswer(name, answers, groupsRequireInstallation, groupRequireUserInput)
 
-          if (!answer) {
-            answer = ANSWERS.IDENTICAL
-            // already installed? identical
-            // automatically overwrite
-          }
+          const group = groups[name]
+          let chalkColor = chalk.yellow
 
-          let groupNPkgToString = this.getPackagesToStr(name, groupNPkg)
-
-          // If the user confirm that he wants to install the package/group, the answer will be true.
           if (answer === ANSWERS.OVERWRITE) {
-            // Get the package or the packages of a group.
-            let pkgs = this.getPackagesToInstall(name, groupNPkg)
+            let pkgs = this.getPackagesToInstall(name, group)
             if (pkgs) {
               packages = packages.concat(pkgs)
             }
-            console.log(`  ${chalk.green(answer)} ${groupNPkgToString}`)
-          } else {
-            console.log(`  ${chalk.yellow(answer)} ${groupNPkgToString}`)
+            chalkColor = chalk.red
           }
+
+          console.log(`  ${chalkColor(answer)} ${this.getGroupToStr(name, group)}`)
         }
 
         if (packages && packages.length > 0) {
@@ -69,97 +67,114 @@ module.exports = {
       })
     }
   },
+  /**
+   * Returns true if the application/addon is on an LTS and false otherwise.
+   * @returns {boolean} true if the application/addon is on an LTS and false otherwise
+   */
   isOnLts () {
     return false
   },
-  doActionOnPackagesIfConditionFullfill (groupsNPkgs, condition, operation) {
-    let groupsNPkgsUserInputRequired = {}
-    for (let name in groupsNPkgs) {
-      const groupNPkg = groupsNPkgs[name]
-      let hasDifference = false
-      if (this.isGroup(groupNPkg)) {
-        const pkgs = this.getGroupPkgs(groupNPkg)
-        for (let pkgName in pkgs) {
-          const pkg = pkgs[pkgName]
-          if (isPkgInstallationRequiredFct(pkg)) {
-            hasDifference = true
-          }
-        }
-      } else {
-        if (isPkgInstallationRequiredFct(groupNPkg)) {
-            hasDifference = true
-        }
-      }
+  /**
+   * Get the user answer for a group. It's possible that the user is not providing any answer.
+   * @param {string} groupName the name of the group
+   * @param {object} answers all the answers provided by the user
+   * @param {object} groupsRequireInstallation groups that require installation
+   * @param {object} groupRequireUserInput groups that require user input
+   * @returns {ANSWERS} an answer
+   */
+  getAnswer (groupName, answers, groupsRequireInstallation, groupRequireUserInput) {
+    let answer = answers[groupName]
 
-      if (hasDifference) {
-        groupsNPkgsUserInputRequired[name] = groupNPkg
-      }
-    }
+    // If the user is not providing any answer we will handle a few specific cases
+    if (!answer) {
+      const isAlreadyInstalled = groupsRequireInstallation[groupName] === undefined
+      const isUserInputNotRequired = groupRequireUserInput[groupName] === undefined
 
-    return groupsNPkgsUserInputRequired
-  },
-
-  // TODO Same group content or same package
-  // TODO clean code
-  getGroupsNPkgsUserInputRequired (groupsNPkgs, isPkgInstallationRequiredFct) {
-    let groupsNPkgsUserInputRequired = {}
-    for (let name in groupsNPkgs) {
-      const groupNPkg = groupsNPkgs[name]
-      let hasDifference = false
-      if (this.isGroup(groupNPkg)) {
-        const pkgs = this.getGroupPkgs(groupNPkg)
-        for (let pkgName in pkgs) {
-          const pkg = pkgs[pkgName]
-          if (isPkgInstallationRequiredFct(pkg)) {
-            hasDifference = true
-          }
-        }
-      } else {
-        if (isPkgInstallationRequiredFct(groupNPkg)) {
-            hasDifference = true
-        }
-      }
-
-      if (hasDifference) {
-        groupsNPkgsUserInputRequired[name] = groupNPkg
+      if (isAlreadyInstalled) {
+        answer = ANSWERS.IDENTICAL
+      } else if (isUserInputNotRequired) {
+        // automatically overwrite if the user input is not necessary
+        answer = ANSWERS.OVERWRITE
       }
     }
 
-    return groupsNPkgsUserInputRequired
-  },
-  isPkgInstallationRequired (pkg) {
-    return !pkg.installedTarget || pkg.installedTarget !== pkg.target
-  },
-  isPkgInstallationRequiredOnLts (pkg) {
-    return !pkg.installedTarget
+    return answer
   },
   /**
-   * Get a the questions we will ask to the user.
-   * @param {object} groupsNPkgs the packages/groups
-   * @returns {object} the questions
+   * Get all the groups matching with the condition function passed in parameter.
+   * @param {object} groups the groups
+   * @param {function} conditionFct all the packages in this group need to match this condition to be returned.
+   * @returns {object} groups matching the condition
    */
-  getQuestionsPerGroupNPkg (groupsNPkgs) {
-    let questions = {}
-    for (let name in groupsNPkgs) {
-      const question = this.getQuestion(name, groupsNPkgs[name])
-      if (question) {
-        questions[name] = question
+  getGroupsMatchingCondition (groups, conditionFct) {
+    let groupsWhereUserInputRequired = {}
+    for (let name in groups) {
+      const group = groups[name]
+      let matchCondition = false
+
+      const pkgs = this.getGroupPkgs(group)
+      for (let pkgName in pkgs) {
+        const pkg = pkgs[pkgName]
+        if (conditionFct(pkg)) {
+          matchCondition = true
+        }
+      }
+
+      if (matchCondition) {
+        groupsWhereUserInputRequired[name] = group
       }
     }
-    return questions
+
+    return groupsWhereUserInputRequired
   },
-  promptUser (questionsPerGroupNPkg) {
+  /**
+   * Returns true if the installation of the package is required and false otherwise.
+   * @param {object} pkg the package
+   * @returns {boolean} true if the installation of the package is required and false otherwise.
+   */
+  isPkgInstallationRequired (pkg) {
+    return pkg.installedTarget === undefined || pkg.installedTarget !== pkg.target
+  },
+  /**
+   * Returns true if the user input for the package is required and false otherwise.
+   * @param {object} pkg the package
+   * @returns {boolean} true if the user input for the package is required and false otherwise
+   */
+  isUserInputRequired (pkg) {
+    return pkg.installedTarget === undefined
+  },
+  /**
+   * Get a the messages we will ask to the user.
+   * @param {object} groups the groups
+   * @returns {object} the messages
+   */
+  getMessagesPerGroup (groups) {
+    let messages = {}
+    for (let name in groups) {
+      const message = this.getGroupToStr(name, groups[name])
+      if (message) {
+        messages[name] = message
+      }
+    }
+    return messages
+  },
+  /**
+   * Prompt the user with a message.
+   * @param {object} messagesPerGroup the message to ask per group
+   * @returns {Promise} the prompt Promise
+   */
+  promptUser (messagesPerGroup) {
     let userPrompts = []
-    for (let groupNPkg in questionsPerGroupNPkg) {
-      let message = questionsPerGroupNPkg[groupNPkg]
+    for (let group in messagesPerGroup) {
+      let message = messagesPerGroup[group]
       if (message) {
         userPrompts.push({
           type: 'expand',
-          name: groupNPkg,
+          name: group,
           message: `${chalk.red(this.capitalizeFirstLetter(ANSWERS.OVERWRITE))} ${message}?`,
           choices: [
             { key: 'y', name: 'Yes, overwrite', value: ANSWERS.OVERWRITE },
-            { key: 'n', name: 'No, skip', value: ANSWERS.SKIP },
+            { key: 'n', name: 'No, skip', value: ANSWERS.SKIP }
             // TODO { key: 'd', name: 'Diff', value: ANSWERS.SKIP }
           ]
         })
@@ -168,52 +183,45 @@ module.exports = {
 
     return this.ui.prompt(userPrompts)
   },
+  /**
+   * Capitalize the first letter of a string.
+   * @param {string} text a text
+   * @returns {string} text with the first letter capitalized
+   */
   capitalizeFirstLetter (text) {
     return text.charAt(0).toUpperCase() + text.slice(1)
   },
   /**
-   * Get a the question we will ask to the user.
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {object} a question
+   * Get the group to string.
+   * @param {string} name the name of the group
+   * @param {object} group the group
+   * @returns {string} a package to string
    */
-  getQuestion (name, groupNPkg) {
-    if (name && groupNPkg) {
-      return this.getPackagesToStr(name, groupNPkg)
-    }
-  },
-  /**
-   * TODO
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {string} a message
-   */
-  getPackagesToStr (name, groupNPkg) {
-    if (this.isGroup(groupNPkg)) {
-      const packages = this.getGroupPackages(groupNPkg, this.getPackageToStr)
-      if (packages) {
-        const pkgToStr = (packages &&  !_.isEmpty(packages)) ? `(${packages.join(', ')})` : ''
-        return `${name} ${pkgToStr}`
-      }
-    } else {
-      let pkg = this.getPackageToStr(name, groupNPkg)
-      if (pkg) {
-        return `${pkg}`
+  getGroupToStr (name, group) {
+    if (name && group) {
+      if (group.isGroup) {
+        const packages = this.getGroupPackages(group, this.getPackageToStr)
+        if (packages) {
+          const pkgToStr = (packages && !_.isEmpty(packages)) ? `(${packages.join(', ')})` : ''
+          return `${name} ${pkgToStr}`
+        }
+      } else {
+        const pkg = this.getGroupPkgs(group)[name]
+        const pkgToStr = this.getPackageToStr(name, pkg)
+        if (pkgToStr) {
+          return `${pkgToStr}`
+        }
       }
     }
   },
   /**
-   * Get the package or the packages for a group.
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {array} a package or a list of packages
+   * Get the packages for a group.
+   * @param {string} name the name of the group
+   * @param {object} group the group
+   * @returns {array} a list of packages
    */
-  getPackagesToInstall (name, groupNPkg) {
-    if (this.isGroup(groupNPkg)) {
-      return this.getGroupPackages(groupNPkg, this.getPackageToInstall)
-    } else {
-      return this.getPackageToInstall(name, groupNPkg)
-    }
+  getPackagesToInstall (name, group) {
+    return this.getGroupPackages(group, this.getPackageToInstall)
   },
   /**
    * Get a package object.
@@ -222,9 +230,7 @@ module.exports = {
    * @returns {object} the package object
    */
   getPackageToInstall (name, pkg) {
-    if (name && pkg && pkg.target && pkg.target !== pkg.installedTarget) {
-      return {name, target: pkg.target}
-    }
+    return {name, target: pkg.target}
   },
   /**
    * Get a package to string.
@@ -234,7 +240,6 @@ module.exports = {
    */
   getPackageToStr (name, pkg) {
     return name + '@' + pkg.target
-      // TODO if (pkg.installedTarget !== pkg.target) {
   },
   /**
    * Get all the packages for a group.
@@ -270,14 +275,14 @@ module.exports = {
     return group.packages
   },
   /**
-   * Get a the packages and group of packages.
+   * Get all the groups of packages.
    * @param {object} options all the options
-   * @returns {object} the packages and group of packages
+   * @returns {object} the group of packages
    */
-  getGroupsNPkgs (options) {
+  getGroups (options) {
     let requestedGroupsNPkgs = this.getRequestedGroupsNPkgs(options)
     let existingPkgs = this.getExistingPkgs(options)
-    return this.createGroupsNPkgs(requestedGroupsNPkgs, existingPkgs)
+    return this.createGroups(requestedGroupsNPkgs, existingPkgs)
   },
   /**
    * Get a the existing packages in the application/addon.
@@ -301,13 +306,14 @@ module.exports = {
     return ltsFile
   },
   /**
-   * Create the packages and group of packages based on the requested and existing packages.
-   * @param {object} requestedGroupsNPkgs the requested pckages and group of packages
-   * @param {object} existingPkgs the existing pckages
-   * @returns {object} the packages and group of packages
+   * Create the groups of packages based on the requested and existing packages.
+   * Note: This method is returning single packages as groups to simplify the handling.
+   * @param {object} requestedGroupsNPkgs the requested packages and group of packages
+   * @param {object} existingPkgs the existing packages
+   * @returns {object} the groups of packages
    */
-  createGroupsNPkgs (requestedGroupsNPkgs, existingPkgs) {
-    let groupsNPkgs = {}
+  createGroups (requestedGroupsNPkgs, existingPkgs) {
+    let groups = {}
     for (let groupNPkgName in requestedGroupsNPkgs) {
       let pkgs = {}
 
@@ -326,7 +332,7 @@ module.exports = {
           }
 
           if (pkgs && !_.isEmpty(pkgs)) {
-            groupsNPkgs[groupNPkgName] = this.createGroup(pkgs)
+            groups[groupNPkgName] = this.createGroup(pkgs)
           }
         }
       } else {
@@ -334,12 +340,12 @@ module.exports = {
         const name = groupNPkgName
 
         if (this.isValidPkg(name, target)) {
-          groupsNPkgs[name] = this.createPkg(name, target, existingPkgs)
+          groups[name] = this.createGroupFromPackage(name, this.createPkg(name, target, existingPkgs))
         }
       }
     }
 
-    return groupsNPkgs
+    return groups
   },
   /**
    * Create a group.
@@ -347,8 +353,20 @@ module.exports = {
    * @returns {object} a group
    */
   createGroup (packages) {
-    let group = {}
+    let group = { isGroup: true }
     group['packages'] = packages
+    return group
+  },
+  /**
+   * Create a group from a package.
+   * @param {string} name the name of the package that will also be used as the name of the group
+   * @param {objec} pkg the package
+   * @returns {object} a group
+   */
+  createGroupFromPackage (name, pkg) {
+    let group = this.createGroup({})
+    group.isGroup = false
+    group.packages[name] = pkg
     return group
   },
   /**
@@ -365,24 +383,23 @@ module.exports = {
       installedTarget: existingTarget
     }
   },
+  /**
+   * Returns true if is a valid group and false otherwise.
+   * @param {object} group a group
+   * @returns {boolean} true if is a valid group and false otherwise
+   */
   isValidGroup (group) {
     return group.packages && !_.isEmpty(group.packages)
   },
+  /**
+   * Returns true if is a valid package and false otherwise.
+   * @param {string} name the name of the package
+   * @param {string} target the target of the package
+   * @returns {boolean} true if is a valid package and false otherwise
+   */
   isValidPkg (name, target) {
     return name && target && typeof name === 'string' && typeof target === 'string'
   }
 }
-
-// add tests
-// - New packages
-//     - Accept or reject any changes
-//     - Show the diff. to tell what's new
-// - Already have the packages
-//     - Not on LTS
-//         - Handle like new packages
-//     - Already on an LTS
-//         - Automatically update to the latest the packages
-//           you already have
-//         - Show the user the packages you updated
-
-// rename question to message or pckg or something like that
+// TODO LTS
+// Add tests

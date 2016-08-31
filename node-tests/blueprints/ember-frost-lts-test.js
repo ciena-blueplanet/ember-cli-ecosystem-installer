@@ -143,7 +143,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     })
   })
 
-  describe('Non LTS', function () {
+  describe('Non LTS and LTS', function () {
     let args
     beforeEach(function () {
       args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
@@ -158,27 +158,6 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         })
 
         return emberNew()
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-
-      it('Group containing only packages to update', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.OVERWRITE,
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.1.0', dev: true},        // to update
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-          ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packages)
             .to.have.lengthOf(3)
@@ -238,55 +217,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
             .to.contain('ember-d3@0.2.0')
             .to.contain('ember-frost-core@0.25.3'))
       })
-
-      it('Group containing package already installed and package to update', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(2)
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
     })
 
-    describe('Single package', function () {
-      beforeEach(function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.SKIP,
-          'package4': actionsEnum.SKIP,
-          'ember-prop-types': actionsEnum.OVERWRITE
-        })
-      })
-
-      it('New packages', function () {
-        return emberNew()
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(1)
-            .to.contain('ember-prop-types@~0.2.0'))
-      })
-
-      it('Packages to update', function () {
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'ember-prop-types', version: '0.1.0', dev: true} // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(1)
-            .to.contain('ember-prop-types@~0.2.0'))
-      })
-
+    describe('Single packages', function () {
       it('Packages already installed', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           'package3': actionsEnum.SKIP,
@@ -302,165 +235,150 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
             .to.be.eql(null))
       })
     })
-  })
 
-  describe('LTS', function () {
-    let args
-    beforeEach(function () {
-      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
-    })
+    describe('Non LTS', function () {
+      describe('Group', function () {
+        it('Group containing only packages to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'package3': actionsEnum.OVERWRITE,
+            'package4': actionsEnum.OVERWRITE,
+            'ember-prop-types': actionsEnum.SKIP
+          })
 
-    describe('Group', function () {
-      it('Group containing only new packages', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.OVERWRITE,
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'my-package', version: '0.1.0', dev: true},        // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(3)
+              .to.contain('my-package@0.2.0')
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
         })
 
-        return emberNew()
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
+        it('Group containing package already installed and package to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'package4': actionsEnum.OVERWRITE,
+            'ember-prop-types': actionsEnum.SKIP
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'my-package', version: '0.2.0', dev: true},        // installed
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(2)
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
+        })
       })
 
-      it('Group containing only packages to update', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'ember-prop-types': actionsEnum.SKIP
+      describe('Single package', function () {
+        beforeEach(function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'package3': actionsEnum.SKIP,
+            'package4': actionsEnum.SKIP,
+            'ember-prop-types': actionsEnum.OVERWRITE
+          })
         })
 
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.1.0', dev: true},        // to update
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-
-      it('Group containing packages already installed', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'ember-prop-types': actionsEnum.SKIP
+        it('New packages', function () {
+          return emberNew()
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(1)
+              .to.contain('ember-prop-types@~0.2.0'))
         })
 
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.eql(null))
-      })
-
-      it('Group containing package to update and new package', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
+        it('Packages to update', function () {
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-prop-types', version: '0.1.0', dev: true} // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(1)
+              .to.contain('ember-prop-types@~0.2.0'))
         })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true} // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(2)
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-
-      it('Group containing package already installed and new package', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(2)
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-
-      it('Group containing package already installed and package to update', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'ember-prop-types': actionsEnum.SKIP
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(2)
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
       })
     })
 
-    describe('Single package', function () {
-      it('New packages', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.SKIP,
-          'package4': actionsEnum.SKIP,
-          'ember-prop-types': actionsEnum.OVERWRITE
+    describe('LTS', function () {
+      describe('Group', function () {
+        it('Group containing only packages to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'ember-prop-types': actionsEnum.SKIP
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'my-package', version: '0.1.0', dev: true},        // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(3)
+              .to.contain('my-package@0.2.0')
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
         })
 
-        return emberNew()
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(1)
-            .to.contain('ember-prop-types@~0.2.0'))
+        it('Group containing package already installed and package to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'ember-prop-types': actionsEnum.SKIP
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'my-package', version: '0.2.0', dev: true},        // installed
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(2)
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
+        })
       })
 
-      it('Packages to update', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.SKIP,
-          'package4': actionsEnum.SKIP
+      describe('Single package', function () {
+        it('New packages', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'package3': actionsEnum.SKIP,
+            'package4': actionsEnum.SKIP,
+            'ember-prop-types': actionsEnum.OVERWRITE
+          })
+
+          return emberNew()
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(1)
+              .to.contain('ember-prop-types@~0.2.0'))
         })
 
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'ember-prop-types', version: '0.1.0', dev: true} // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.have.lengthOf(1)
-            .to.contain('ember-prop-types@~0.2.0'))
-      })
+        it('Packages to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            'package3': actionsEnum.SKIP,
+            'package4': actionsEnum.SKIP
+          })
 
-      it('Packages already installed', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.SKIP,
-          'package4': actionsEnum.SKIP
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-prop-types', version: '0.1.0', dev: true} // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packages)
+              .to.have.lengthOf(1)
+              .to.contain('ember-prop-types@~0.2.0'))
         })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'ember-prop-types', version: '~0.2.0', dev: true} // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packages)
-            .to.be.eql(null))
       })
     })
   })

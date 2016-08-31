@@ -1,3 +1,11 @@
+# 0.3.0
+* Add check if already installed
+* Add the auto overwrite
+* Add the diff simple handling (doing nothing for now)
+* Add the handling of new packages
+* Major refactoring
+
+
 # 0.2.0
 * Add acceptance tests
 

@@ -2,14 +2,12 @@
 
 const chalk = require('chalk')
 const _ = require('lodash')
+const diff = require('diff')
 
 const defaultLtsFile = require('../../lts.json')
+const actionsEnum = require('../models/actions-enum')
 
-const ANSWERS = {
-  OVERWRITE: 'overwrite',
-  SKIP: 'skip',
-  IDENTICAL: 'identical'
-}
+const LTS_PKG_NAME = 'ember-frost-lts'
 
 module.exports = {
   description: 'Install requested packages of an LTS',
@@ -27,36 +25,40 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
-    let groups = this.getGroups(options)
+    let requestedGroupsNPkgs = this.getRequestedGroupsNPkgs(options)
+    let existingPkgs = this.getExistingPkgs(options)
+    let groups = this.createGroups(requestedGroupsNPkgs, existingPkgs)
+
     if (groups) {
       // Get the groups that need to be installed and required user input
       const groupsRequireInstallation = this.getGroupsMatchingCondition(groups, this.isPkgInstallationRequired)
       let groupRequireUserInput = groupsRequireInstallation
-      if (this.isOnLts()) {
+      if (this.isOnLts(existingPkgs)) {
         groupRequireUserInput = this.getGroupsMatchingCondition(groupRequireUserInput, this.isUserInputRequired)
       }
 
       // Get the messages to prompt the user with
       const messagesPerGroup = this.getMessagesPerGroup(groupRequireUserInput)
       // TODO validate that if we don't need user input we will still go here
-      return this.promptUser(messagesPerGroup).then((answers) => {
-        let packages = []
-
+      let packages = []
+      return this.promptUser(messagesPerGroup).then((actions) => {
         for (let name in groups) {
-          let answer = this.getAnswer(name, answers, groupsRequireInstallation, groupRequireUserInput)
+          let action = this.getAction(name, actions, groupsRequireInstallation, groupRequireUserInput)
 
           const group = groups[name]
           let chalkColor = chalk.yellow
 
-          if (answer === ANSWERS.OVERWRITE) {
+          if (action === actionsEnum.OVERWRITE || action === actionsEnum.AUTO_OVERWRITE) {
             let pkgs = this.getPackagesToInstall(name, group)
             if (pkgs) {
               packages = packages.concat(pkgs)
             }
             chalkColor = chalk.red
+          } else if (action == actionsEnum.DIFF) {
+            this.console.log('There is a diff')
           }
 
-          console.log(`  ${chalkColor(answer)} ${this.getGroupToStr(name, group)}`)
+          console.log(`  ${chalkColor(action)} ${this.getGroupToStr(name, group)}`)
         }
 
         if (packages && packages.length > 0) {
@@ -69,36 +71,37 @@ module.exports = {
   },
   /**
    * Returns true if the application/addon is on an LTS and false otherwise.
+   * @param {object} existingPkgs the existing packages
    * @returns {boolean} true if the application/addon is on an LTS and false otherwise
    */
-  isOnLts () {
-    return false
+  isOnLts (existingPkgs) {
+    return existingPkgs[LTS_PKG_NAME] !== undefined
   },
   /**
-   * Get the user answer for a group. It's possible that the user is not providing any answer.
+   * Get the user action for a group. It's possible that the user is not providing any action.
    * @param {string} groupName the name of the group
-   * @param {object} answers all the answers provided by the user
+   * @param {object} actions all the actions provided by the user
    * @param {object} groupsRequireInstallation groups that require installation
    * @param {object} groupRequireUserInput groups that require user input
-   * @returns {ANSWERS} an answer
+   * @returns {ACTIONS_ENUM} an action
    */
-  getAnswer (groupName, answers, groupsRequireInstallation, groupRequireUserInput) {
-    let answer = answers[groupName]
+  getAction (groupName, actions, groupsRequireInstallation, groupRequireUserInput) {
+    let action = actions[groupName]
 
-    // If the user is not providing any answer we will handle a few specific cases
-    if (!answer) {
+    // If the user is not providing any action we will handle a few specific cases
+    if (!action) {
       const isAlreadyInstalled = groupsRequireInstallation[groupName] === undefined
       const isUserInputNotRequired = groupRequireUserInput[groupName] === undefined
 
       if (isAlreadyInstalled) {
-        answer = ANSWERS.IDENTICAL
+        action = actionsEnum.IDENTICAL
       } else if (isUserInputNotRequired) {
         // automatically overwrite if the user input is not necessary
-        answer = ANSWERS.OVERWRITE
+        action = actionsEnum.AUTO_OVERWRITE
       }
     }
 
-    return answer
+    return action
   },
   /**
    * Get all the groups matching with the condition function passed in parameter.
@@ -171,25 +174,17 @@ module.exports = {
         userPrompts.push({
           type: 'expand',
           name: group,
-          message: `${chalk.red(this.capitalizeFirstLetter(ANSWERS.OVERWRITE))} ${message}?`,
+          message: `${chalk.red(this.capitalizeFirstLetter(actionsEnum.OVERWRITE))} ${message}?`,
           choices: [
-            { key: 'y', name: 'Yes, overwrite', value: ANSWERS.OVERWRITE },
-            { key: 'n', name: 'No, skip', value: ANSWERS.SKIP }
-            // TODO { key: 'd', name: 'Diff', value: ANSWERS.SKIP }
+            { key: 'y', name: 'Yes, overwrite', value: actionsEnum.OVERWRITE },
+            { key: 'n', name: 'No, skip', value: actionsEnum.SKIP },
+            { key: 'd', name: 'Diff', value: actionsEnum.DIFF }
           ]
         })
       }
     }
 
     return this.ui.prompt(userPrompts)
-  },
-  /**
-   * Capitalize the first letter of a string.
-   * @param {string} text a text
-   * @returns {string} text with the first letter capitalized
-   */
-  capitalizeFirstLetter (text) {
-    return text.charAt(0).toUpperCase() + text.slice(1)
   },
   /**
    * Get the group to string.
@@ -275,19 +270,9 @@ module.exports = {
     return group.packages
   },
   /**
-   * Get all the groups of packages.
-   * @param {object} options all the options
-   * @returns {object} the group of packages
-   */
-  getGroups (options) {
-    let requestedGroupsNPkgs = this.getRequestedGroupsNPkgs(options)
-    let existingPkgs = this.getExistingPkgs(options)
-    return this.createGroups(requestedGroupsNPkgs, existingPkgs)
-  },
-  /**
    * Get a the existing packages in the application/addon.
-   * @returns {array} the existing packages
    * @param {object} options all the options
+   * @returns {object} the existing packages
    */
   getExistingPkgs (options) {
     return options.project.pkg.devDependencies
@@ -399,7 +384,32 @@ module.exports = {
    */
   isValidPkg (name, target) {
     return name && target && typeof name === 'string' && typeof target === 'string'
+  },
+  /**
+   * Capitalize the first letter of a string.
+   * @param {string} text a text
+   * @returns {string} text with the first letter capitalized
+   */
+  capitalizeFirstLetter (text) {
+    return text.charAt(0).toUpperCase() + text.slice(1)
   }
 }
-// TODO LTS
-// Add tests
+
+// Diff
+// diffHighlight (line) {
+//   if (line.added) {
+//     return `- ${chalk.green(line.value)}`;
+//   } else if (line.removed) {
+//     return `+ ${chalk.red(line.value)}`;
+//   // } else if (line.match(/^@@/)) {
+//   //   return chalk.cyan(line);
+//   } else {
+//     return line;
+//   }
+// },
+// getLineDiff(oldText, newText) {
+//   const lines = diff.diffLines(oldText, newText)
+//   for (var i = 0; i < lines.length; i++) {
+//     console.log(this.diffHighlight(lines[i]));
+//   }
+// },

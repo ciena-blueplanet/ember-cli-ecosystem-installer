@@ -1,6 +1,12 @@
 'use strict'
 
+const chalk = require('chalk')
+const _ = require('lodash')
+
 const defaultLtsFile = require('../../lts.json')
+const actionsEnum = require('../models/actions-enum')
+
+const LTS_PKG_NAME = 'ember-frost-lts'
 
 module.exports = {
   description: 'Install requested packages of an LTS',
@@ -18,20 +24,40 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
-    let groupsNPkgs = this.getGroupsNPkgs(options.ltsFile)
-    if (groupsNPkgs) {
-      return this.ui.prompt(this.getQuestions(groupsNPkgs)).then((answers) => {
-        let packages = []
+    let requestedGroupsNPkgs = this.getRequestedGroupsNPkgs(options)
+    let existingPkgs = this.getExistingPkgs(options)
+    let groups = this.createGroups(requestedGroupsNPkgs, existingPkgs)
 
-        for (let name in answers) {
-          const answer = answers[name]
+    if (groups) {
+      // Get the groups that need to be installed and required user input
+      const groupsRequireInstallation = this.getGroupsMatchingCondition(groups, this.isPkgInstallationRequired)
+      let groupRequireUserInput = groupsRequireInstallation
+      if (this.isOnLts(existingPkgs)) {
+        groupRequireUserInput = this.getGroupsMatchingCondition(groupRequireUserInput, this.isUserInputRequired)
+      }
 
-          // If the user confirm that he wants to install the package/group, the answer will be true.
-          if (answer) {
-            const groupNPkg = groupsNPkgs[name]
-            // Get the package or the packages of a group.
-            packages = packages.concat(this.getPackages(name, groupNPkg))
+      // Get the messages to prompt the user with
+      const messagesPerGroup = this.getMessagesPerGroup(groupRequireUserInput)
+      // TODO validate that if we don't need user input we will still go here
+      let packages = []
+      return this.promptUser(messagesPerGroup).then((actions) => {
+        for (let name in groups) {
+          let action = this.getAction(name, actions, groupsRequireInstallation, groupRequireUserInput)
+
+          const group = groups[name]
+          let chalkColor = chalk.yellow
+
+          if (action === actionsEnum.OVERWRITE || action === actionsEnum.AUTO_OVERWRITE) {
+            let pkgs = this.getPackagesToInstall(name, group)
+            if (pkgs) {
+              packages = packages.concat(pkgs)
+            }
+            chalkColor = chalk.red
+          } else if (action === actionsEnum.DIFF) {
+            this.console.log('There is a diff')
           }
+
+          console.log(`  ${chalkColor(action)} ${this.getGroupToStr(name, group)}`)
         }
 
         if (packages && packages.length > 0) {
@@ -43,105 +69,171 @@ module.exports = {
     }
   },
   /**
-   * Get a the packages and group of packages.
-   * @param {string} ltsFilePath the path of the lts file
-   * @returns {object} the packages and group of packages
+   * Returns true if the application/addon is on an LTS and false otherwise.
+   * @param {object} existingPkgs the existing packages
+   * @returns {boolean} true if the application/addon is on an LTS and false otherwise
    */
-  getGroupsNPkgs (ltsFilePath) {
-    let ltsFile = defaultLtsFile
-    if (ltsFilePath.trim() !== '') {
-      ltsFile = require(`../../${ltsFilePath}`)
-    }
-    return ltsFile
+  isOnLts (existingPkgs) {
+    return existingPkgs[LTS_PKG_NAME] !== undefined
   },
   /**
-   * Get a the questions we will ask to the user.
-   * @param {object} groupsNPkgs the packages/groups
-   * @returns {object} the questions
+   * Get the user action for a group. It's possible that the user is not providing any action.
+   * @param {string} groupName the name of the group
+   * @param {object} actions all the actions provided by the user
+   * @param {object} groupsRequireInstallation groups that require installation
+   * @param {object} groupRequireUserInput groups that require user input
+   * @returns {ACTIONS_ENUM} an action
    */
-  getQuestions (groupsNPkgs) {
-    let questions = []
-    for (let name in groupsNPkgs) {
-      const question = this.getQuestion(name, groupsNPkgs[name])
-      if (question) {
-        questions.push(question)
+  getAction (groupName, actions, groupsRequireInstallation, groupRequireUserInput) {
+    let action = actions[groupName]
+
+    // If the user is not providing any action we will handle a few specific cases
+    if (!action) {
+      const isAlreadyInstalled = groupsRequireInstallation[groupName] === undefined
+      const isUserInputNotRequired = groupRequireUserInput[groupName] === undefined
+
+      if (isAlreadyInstalled) {
+        action = actionsEnum.IDENTICAL
+      } else if (isUserInputNotRequired) {
+        // automatically overwrite if the user input is not necessary
+        action = actionsEnum.AUTO_OVERWRITE
       }
     }
-    return questions
+
+    return action
   },
   /**
-   * Get a the question we will ask to the user.
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {object} a question
+   * Get all the groups matching with the condition function passed in parameter.
+   * @param {object} groups the groups
+   * @param {function} conditionFct all the packages in this group need to match this condition to be returned.
+   * @returns {object} groups matching the condition
    */
-  getQuestion (name, groupNPkg) {
-    if (name && groupNPkg) {
-      const message = this.getMessage(name, groupNPkg)
+  getGroupsMatchingCondition (groups, conditionFct) {
+    let groupsWhereUserInputRequired = {}
+    for (let name in groups) {
+      const group = groups[name]
+      let matchCondition = false
+
+      const pkgs = this.getGroupPkgs(group)
+      for (let pkgName in pkgs) {
+        const pkg = pkgs[pkgName]
+        if (conditionFct(pkg)) {
+          matchCondition = true
+        }
+      }
+
+      if (matchCondition) {
+        groupsWhereUserInputRequired[name] = group
+      }
+    }
+
+    return groupsWhereUserInputRequired
+  },
+  /**
+   * Returns true if the installation of the package is required and false otherwise.
+   * @param {object} pkg the package
+   * @returns {boolean} true if the installation of the package is required and false otherwise.
+   */
+  isPkgInstallationRequired (pkg) {
+    return pkg.installedTarget === undefined || pkg.installedTarget !== pkg.target
+  },
+  /**
+   * Returns true if the user input for the package is required and false otherwise.
+   * @param {object} pkg the package
+   * @returns {boolean} true if the user input for the package is required and false otherwise
+   */
+  isUserInputRequired (pkg) {
+    return pkg.installedTarget === undefined
+  },
+  /**
+   * Get a the messages we will ask to the user.
+   * @param {object} groups the groups
+   * @returns {object} the messages
+   */
+  getMessagesPerGroup (groups) {
+    let messages = {}
+    for (let name in groups) {
+      const message = this.getGroupToStr(name, groups[name])
       if (message) {
-        return {
-          message: message,
-          type: 'confirm',
-          name: name
+        messages[name] = message
+      }
+    }
+    return messages
+  },
+  /**
+   * Prompt the user with a message.
+   * @param {object} messagesPerGroup the message to ask per group
+   * @returns {Promise} the prompt Promise
+   */
+  promptUser (messagesPerGroup) {
+    let userPrompts = []
+    for (let group in messagesPerGroup) {
+      let message = messagesPerGroup[group]
+      if (message) {
+        userPrompts.push({
+          type: 'expand',
+          name: group,
+          message: `${chalk.red(this.capitalizeFirstLetter(actionsEnum.OVERWRITE))} ${message}?`,
+          choices: [
+            { key: 'y', name: 'Yes, overwrite', value: actionsEnum.OVERWRITE },
+            { key: 'n', name: 'No, skip', value: actionsEnum.SKIP },
+            { key: 'd', name: 'Diff', value: actionsEnum.DIFF }
+          ]
+        })
+      }
+    }
+
+    return this.ui.prompt(userPrompts)
+  },
+  /**
+   * Get the group to string.
+   * @param {string} name the name of the group
+   * @param {object} group the group
+   * @returns {string} a package to string
+   */
+  getGroupToStr (name, group) {
+    if (name && group) {
+      if (group.isGroup) {
+        const packages = this.getGroupPackages(group, this.getPackageToStr)
+        if (packages) {
+          const pkgToStr = (packages && !_.isEmpty(packages)) ? `(${packages.join(', ')})` : ''
+          return `${name} ${pkgToStr}`
+        }
+      } else {
+        const pkg = this.getGroupPkgs(group)[name]
+        const pkgToStr = this.getPackageToStr(name, pkg)
+        if (pkgToStr) {
+          return `${pkgToStr}`
         }
       }
     }
   },
   /**
-   * Get a message that will be shown to the user.
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {string} a message
+   * Get the packages for a group.
+   * @param {string} name the name of the group
+   * @param {object} group the group
+   * @returns {array} a list of packages
    */
-  getMessage (name, groupNPkg) {
-    if (this.isGroup(groupNPkg)) {
-      const packages = this.getGroupPackages(groupNPkg, this.getPackageToStr)
-      if (packages && packages.length > 0) {
-        return `${name} (${packages.join(', ')}) ?`
-      } else {
-        console.log(`Invalid group: ${name}`)
-      }
-    } else {
-      let pkg = this.getPackageToStr(name, groupNPkg)
-      if (pkg) {
-        return `${pkg} ?`
-      } else {
-        console.log(`Invalid package: ${name}`)
-      }
-    }
-  },
-  /**
-   * Get the package or the packages for a group.
-   * @param {string} name the name of the package/group
-   * @param {object} groupNPkg the package/group
-   * @returns {array} a package or a list of packages
-   */
-  getPackages (name, groupNPkg) {
-    if (this.isGroup(groupNPkg)) {
-      return this.getGroupPackages(groupNPkg, this.getPackage)
-    } else {
-      return this.getPackage(name, groupNPkg)
-    }
+  getPackagesToInstall (name, group) {
+    return this.getGroupPackages(group, this.getPackageToInstall)
   },
   /**
    * Get a package object.
    * @param {string} name the name of the package
-   * @param {string} target the version of the package
+   * @param {object} pkg the package information
    * @returns {object} the package object
    */
-  getPackage (name, target) {
-    return {name, target}
+  getPackageToInstall (name, pkg) {
+    return {name, target: pkg.target}
   },
   /**
    * Get a package to string.
    * @param {string} name the name of the package
-   * @param {string} target the version of the package
+   * @param {object} pkg the package information
    * @returns {string} the package to string
    */
-  getPackageToStr (name, target) {
-    if (name && target && typeof name === 'string' && typeof target === 'string') {
-      return name + '@' + target
-    }
+  getPackageToStr (name, pkg) {
+    return name + '@' + pkg.target
   },
   /**
    * Get all the packages for a group.
@@ -151,8 +243,12 @@ module.exports = {
    */
   getGroupPackages (group, getPackage) {
     let packages = []
-    for (let name in group.packages) {
-      packages.push(getPackage(name, group.packages[name]))
+    let groupPkgs = this.getGroupPkgs(group)
+    for (let name in groupPkgs) {
+      const pkg = getPackage(name, groupPkgs[name])
+      if (pkg) {
+        packages.push(pkg)
+      }
     }
     return packages
   },
@@ -162,6 +258,163 @@ module.exports = {
    * @returns {boolean} true if it's a group and false otherwise.
    */
   isGroup (group) {
-    return group.packages !== undefined
+    return this.getGroupPkgs(group) !== undefined
+  },
+  /**
+   * Get the packages form a group
+   * @param {oject} group a group
+   * @returns {array} a list of packages
+   */
+  getGroupPkgs (group) {
+    return group.packages
+  },
+  /**
+   * Get a the existing packages in the application/addon.
+   * @param {object} options all the options
+   * @returns {object} the existing packages
+   */
+  getExistingPkgs (options) {
+    return options.project.pkg.devDependencies
+  },
+  /**
+   * Get a the requested packages to install in the application/addon.
+   * @param {object} options all the options
+   * @returns {object} the requested packages
+   */
+  getRequestedGroupsNPkgs (options) {
+    let ltsFilePath = options.ltsFile
+    let ltsFile = defaultLtsFile
+    if (ltsFilePath.trim() !== '') {
+      ltsFile = require(`../../${ltsFilePath}`)
+    }
+    return ltsFile
+  },
+  /**
+   * Create the groups of packages based on the requested and existing packages.
+   * Note: This method is returning single packages as groups to simplify the handling.
+   * @param {object} requestedGroupsNPkgs the requested packages and group of packages
+   * @param {object} existingPkgs the existing packages
+   * @returns {object} the groups of packages
+   */
+  createGroups (requestedGroupsNPkgs, existingPkgs) {
+    let groups = {}
+    for (let groupNPkgName in requestedGroupsNPkgs) {
+      let pkgs = {}
+
+      const requestGroupNPkg = requestedGroupsNPkgs[groupNPkgName]
+      if (this.isGroup(requestGroupNPkg)) {
+        const group = requestGroupNPkg
+
+        if (this.isValidGroup(group)) {
+          const requestedPkgs = this.getGroupPkgs(group)
+          for (let pkgName in requestedPkgs) {
+            const target = requestedPkgs[pkgName]
+
+            if (this.isValidPkg(pkgName, target)) {
+              pkgs[pkgName] = this.createPkg(pkgName, target, existingPkgs)
+            } else {
+              console.log(`Invalid package: ${pkgName}`)
+            }
+          }
+
+          if (pkgs && !_.isEmpty(pkgs)) {
+            groups[groupNPkgName] = this.createGroup(pkgs)
+          }
+        } else {
+          console.log(`Invalid group: ${groupNPkgName}`)
+        }
+      } else {
+        const target = requestedGroupsNPkgs[groupNPkgName]
+        const name = groupNPkgName
+
+        if (this.isValidPkg(name, target)) {
+          groups[name] = this.createGroupFromPackage(name, this.createPkg(name, target, existingPkgs))
+        } else {
+          console.log(`Invalid package: ${name}`)
+        }
+      }
+    }
+
+    return groups
+  },
+  /**
+   * Create a group.
+   * @param {object} packages contains a all the packages for a group
+   * @returns {object} a group
+   */
+  createGroup (packages) {
+    let group = { isGroup: true }
+    group['packages'] = packages
+    return group
+  },
+  /**
+   * Create a group from a package.
+   * @param {string} name the name of the package that will also be used as the name of the group
+   * @param {objec} pkg the package
+   * @returns {object} a group
+   */
+  createGroupFromPackage (name, pkg) {
+    let group = this.createGroup({})
+    group.isGroup = false
+    group.packages[name] = pkg
+    return group
+  },
+  /**
+   * Create a package.
+   * @param {string} name the name of the package
+   * @param {string} requestedTarget the requested target for the package
+   * @param {object} existingPkgs the existing packages
+   * @returns {object} a package
+   */
+  createPkg (name, requestedTarget, existingPkgs) {
+    const existingTarget = existingPkgs[name]
+    return {
+      target: requestedTarget,
+      installedTarget: existingTarget
+    }
+  },
+  /**
+   * Returns true if is a valid group and false otherwise.
+   * @param {object} group a group
+   * @returns {boolean} true if is a valid group and false otherwise
+   */
+  isValidGroup (group) {
+    return group.packages && !_.isEmpty(group.packages)
+  },
+  /**
+   * Returns true if is a valid package and false otherwise.
+   * @param {string} name the name of the package
+   * @param {string} target the target of the package
+   * @returns {boolean} true if is a valid package and false otherwise
+   */
+  isValidPkg (name, target) {
+    return name && target && typeof name === 'string' && typeof target === 'string'
+  },
+  /**
+   * Capitalize the first letter of a string.
+   * @param {string} text a text
+   * @returns {string} text with the first letter capitalized
+   */
+  capitalizeFirstLetter (text) {
+    return text.charAt(0).toUpperCase() + text.slice(1)
   }
 }
+
+// Diff
+// diffHighlight (line) {
+//   if (line.added) {
+//     return `- ${chalk.green(line.value)}`;
+//   } else if (line.removed) {
+//     return `+ ${chalk.red(line.value)}`;
+//   // } else if (line.match(/^@@/)) {
+//   //   return chalk.cyan(line);
+//   } else {
+//     return line;
+//   }
+// },
+// getLineDiff(oldText, newText) {
+//   const lines = diff.diffLines(oldText, newText)
+//   for (var i = 0; i < lines.length; i++) {
+//     console.log(this.diffHighlight(lines[i]));
+//   }
+// },

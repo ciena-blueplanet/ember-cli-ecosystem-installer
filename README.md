@@ -30,8 +30,8 @@ In the following example the package1, package2 and package3 will be installed.
 ember g ember-frost-lts
 installing ember-frost-lts
 Would you like to install the following packages:
-? group-name (package1@package-version, package2@package-version) ? Yes
-? package3@package-version ? Yes
+? group-name (package1@package-version, package2@package-version)? Yes
+? package3@package-version? Yes
 ```
 
 If there is any invalid package/group in your lts.json file you will get the following error message

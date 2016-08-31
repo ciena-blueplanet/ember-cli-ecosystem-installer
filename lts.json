@@ -5,14 +5,14 @@
   },
   "package3": {
     "packages": {
-      "ember-d3": "0.2.0"
+      "ember-hook": "1.3.1"
     }
   },
   "package4": {
     "packages": {
       "ember-frost-core": "0.25.3",
-      "ember-d3": "0.2.0"
+      "ember-redux": "1.5.3"
     }
   },
-  "ember-d3": "~0.2.0"
+  "ember-d3": "0.2.0"
 }

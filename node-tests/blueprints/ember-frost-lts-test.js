@@ -212,7 +212,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         return emberNew()
           .then(() => modifyPackages([
             {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}  // to update
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packages)
@@ -371,7 +371,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         return emberNew()
           .then(() => modifyPackages([
             {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+            {name: 'ember-frost-core', version: '0.25.2', dev: true} // to update
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packages)

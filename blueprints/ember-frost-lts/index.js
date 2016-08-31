@@ -2,7 +2,6 @@
 
 const chalk = require('chalk')
 const _ = require('lodash')
-const diff = require('diff')
 
 const defaultLtsFile = require('../../lts.json')
 const actionsEnum = require('../models/actions-enum')
@@ -54,7 +53,7 @@ module.exports = {
               packages = packages.concat(pkgs)
             }
             chalkColor = chalk.red
-          } else if (action == actionsEnum.DIFF) {
+          } else if (action === actionsEnum.DIFF) {
             this.console.log('There is a diff')
           }
 

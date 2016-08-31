@@ -9,9 +9,9 @@
   "scripts": {
     "build": "ember build",
     "start": "ember server",
-    "eslint": "eslint *.js addon app blueprints config tests --fix",
-    "nodetest": "mocha node-tests --recursive",
-    "lint": "npm run eslint"
+    "test": "npm run-script lint && npm run-script utest",
+    "utest": "istanbul cover _mocha node-tests --recursive",
+    "lint": "eslint *.js addon app blueprints config tests"
   },
   "repository": "git@github.com:ciena-frost/ember-frost-lts.git",
   "engines": {

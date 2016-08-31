@@ -312,12 +312,16 @@ module.exports = {
 
             if (this.isValidPkg(pkgName, target)) {
               pkgs[pkgName] = this.createPkg(pkgName, target, existingPkgs)
+            } else {
+              console.log(`Invalid package: ${pkgName}`)
             }
           }
 
           if (pkgs && !_.isEmpty(pkgs)) {
             groups[groupNPkgName] = this.createGroup(pkgs)
           }
+        } else {
+          console.log(`Invalid group: ${groupNPkgName}`)
         }
       } else {
         const target = requestedGroupsNPkgs[groupNPkgName]
@@ -325,6 +329,8 @@ module.exports = {
 
         if (this.isValidPkg(name, target)) {
           groups[name] = this.createGroupFromPackage(name, this.createPkg(name, target, existingPkgs))
+        } else {
+          console.log(`Invalid package: ${name}`)
         }
       }
     }

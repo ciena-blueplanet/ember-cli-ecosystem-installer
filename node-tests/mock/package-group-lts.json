@@ -1,11 +1,7 @@
 {
-  "package1": {},
-  "package2": {
-    "packages": {}
-  },
   "package3": {
     "packages": {
-      "ember-d3": "0.2.0"
+      "my-package": "0.2.0"
     }
   },
   "package4": {
@@ -14,5 +10,5 @@
       "ember-d3": "0.2.0"
     }
   },
-  "ember-d3": "~0.2.0"
+  "ember-prop-types": "~0.2.0"
 }

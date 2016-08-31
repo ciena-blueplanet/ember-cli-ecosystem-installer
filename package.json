@@ -9,7 +9,8 @@
   "scripts": {
     "build": "ember build",
     "start": "ember server",
-    "lint": "eslint *.js addon app config tests"
+    "lint": "eslint *.js addon app config tests",
+    "nodetest": "mocha node-tests --recursive"
   },
   "repository": "git@github.com:ciena-frost/ember-frost-lts.git",
   "engines": {
@@ -21,6 +22,7 @@
     "broccoli-asset-rev": "^2.2.0",
     "ember-cli": "^2.7.0",
     "ember-cli-app-version": "^1.0.0",
+    "ember-cli-blueprint-test-helpers": "^0.13.0",
     "ember-cli-dependency-checker": "^1.2.0",
     "ember-cli-htmlbars-inline-precompile": "^0.3.1",
     "ember-cli-inject-live-reload": "^1.4.0",
@@ -38,7 +40,9 @@
     "ember-try": "^0.1.2",
     "eslint": "^3.0.1",
     "eslint-config-frost-standard": "^3.0.0",
-    "loader.js": "^4.0.0"
+    "loader.js": "^4.0.0",
+    "mocha": "^2.5.3",
+    "testdouble": "^1.6.0"
   },
   "keywords": [
     "ember-addon",

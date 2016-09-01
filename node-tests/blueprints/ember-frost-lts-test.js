@@ -73,7 +73,10 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
   it('Single package', function () {
     const args = ['ember-frost-lts', '--lts-file=node-tests/mock/single-package-lts.json']
-    td.when(prompt(td.matchers.anything())).thenResolve({ 'ember-prop-types': actionsEnum.OVERWRITE })
+    td.when(prompt(td.matchers.anything())).thenResolve({
+      userInputInstallPkgs: [ 'ember-prop-types'],
+      confirmInstallPkgs: 'y'
+    })
 
     return emberNew()
       .then(() => emberGenerate(args))
@@ -84,7 +87,10 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
   it('Single group', function () {
     const args = ['ember-frost-lts', '--lts-file=node-tests/mock/single-group-lts.json']
-    td.when(prompt(td.matchers.anything())).thenResolve({ 'package3': actionsEnum.OVERWRITE })
+    td.when(prompt(td.matchers.anything())).thenResolve({
+      userInputInstallPkgs: [ 'package3'],
+      confirmInstallPkgs: 'y'
+    })
 
     return emberNew()
       .then(() => emberGenerate(args))
@@ -97,9 +103,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     it('User request only 1 group', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
-        'package3': actionsEnum.OVERWRITE,
-        'package4': actionsEnum.SKIP,
-        'ember-prop-types': actionsEnum.SKIP
+        userInputInstallPkgs: [ 'package3'],
+        confirmInstallPkgs: 'y'
       })
 
       return emberNew()
@@ -112,9 +117,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     it('User request only 1 package', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
-        'package3': actionsEnum.SKIP,
-        'package4': actionsEnum.SKIP,
-        'ember-prop-types': actionsEnum.OVERWRITE
+        userInputInstallPkgs: [ 'ember-prop-types'],
+        confirmInstallPkgs: 'y'
       })
 
       return emberNew()
@@ -127,9 +131,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     it('User request everything', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
-        'package3': actionsEnum.OVERWRITE,
-        'package4': actionsEnum.OVERWRITE,
-        'ember-prop-types': actionsEnum.OVERWRITE
+        userInputInstallPkgs: [ 'package3', 'package4', 'ember-prop-types'],
+        confirmInstallPkgs: 'y'
       })
 
       return emberNew()
@@ -152,9 +155,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     describe('Group', function () {
       it('Group containing only new packages', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.OVERWRITE,
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
+          userInputInstallPkgs: [ 'package3', 'package4'],
+          confirmInstallPkgs: 'y'
         })
 
         return emberNew()
@@ -168,7 +170,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       it('Group containing packages already installed', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          'ember-prop-types': actionsEnum.SKIP
+          confirmInstallPkgs: 'y'
         })
 
         return emberNew()
@@ -184,8 +186,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       it('Group containing package to update and new package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
+          userInputInstallPkgs: [ 'package4'],
+          confirmInstallPkgs: 'y'
         })
 
         return emberNew()
@@ -202,8 +204,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       it('Group containing package already installed and new package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          'package4': actionsEnum.OVERWRITE,
-          'ember-prop-types': actionsEnum.SKIP
+          userInputInstallPkgs: [ 'package4'],
+          confirmInstallPkgs: 'y'
         })
 
         return emberNew()
@@ -222,8 +224,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     describe('Single packages', function () {
       it('Packages already installed', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          'package3': actionsEnum.SKIP,
-          'package4': actionsEnum.SKIP
+          confirmInstallPkgs: 'y'
         })
 
         return emberNew()
@@ -236,13 +237,27 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       })
     })
 
+    it('Groups and single packages all installed', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({ })
+
+      return emberNew()
+        .then(() => modifyPackages([
+          {name: 'my-package', version: '0.2.0', dev: true},        // installed
+          {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
+          {name: 'ember-d3', version: '0.2.0', dev: true},          // installed
+          {name: 'ember-prop-types', version: '~0.2.0', dev: true}  // installed
+        ]))
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.have.eql(null))
+    })
+
     describe('Non LTS', function () {
       describe('Group', function () {
         it('Group containing only packages to update', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'package3': actionsEnum.OVERWRITE,
-            'package4': actionsEnum.OVERWRITE,
-            'ember-prop-types': actionsEnum.SKIP
+            userInputInstallPkgs: [ 'package3', 'package4'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()
@@ -261,8 +276,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         it('Group containing package already installed and package to update', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'package4': actionsEnum.OVERWRITE,
-            'ember-prop-types': actionsEnum.SKIP
+            userInputInstallPkgs: [ 'package4'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()
@@ -282,9 +297,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       describe('Single package', function () {
         beforeEach(function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'package3': actionsEnum.SKIP,
-            'package4': actionsEnum.SKIP,
-            'ember-prop-types': actionsEnum.OVERWRITE
+            userInputInstallPkgs: [ 'ember-prop-types'],
+            confirmInstallPkgs: 'y'
           })
         })
 
@@ -313,7 +327,10 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       describe('Group', function () {
         it('Group containing only packages to update', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'ember-prop-types': actionsEnum.SKIP
+            // We need to mock this but those will be selected by default since we are on an LTS and
+            // that we already have those packages in our package.json
+            userInputInstallPkgs: [ 'package3', 'package4'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()
@@ -332,7 +349,10 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         it('Group containing package already installed and package to update', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'ember-prop-types': actionsEnum.SKIP
+            // We need to mock this but those will be selected by default since we are on an LTS and
+            // that we already have those packages in our package.json
+            userInputInstallPkgs: [ 'package4'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()
@@ -352,9 +372,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       describe('Single package', function () {
         it('New packages', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'package3': actionsEnum.SKIP,
-            'package4': actionsEnum.SKIP,
-            'ember-prop-types': actionsEnum.OVERWRITE
+            userInputInstallPkgs: [ 'ember-prop-types'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()
@@ -366,8 +385,10 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         it('Packages to update', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
-            'package3': actionsEnum.SKIP,
-            'package4': actionsEnum.SKIP
+            // We need to mock this but those will be selected by default since we are on an LTS and
+            // that we already have those packages in our package.json
+            userInputInstallPkgs: [ 'ember-prop-types'],
+            confirmInstallPkgs: 'y'
           })
 
           return emberNew()

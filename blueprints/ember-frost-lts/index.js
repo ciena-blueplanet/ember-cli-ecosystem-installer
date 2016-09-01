@@ -5,8 +5,11 @@ const _ = require('lodash')
 
 const defaultLtsFile = require('../../lts.json')
 const actionsEnum = require('../models/actions-enum')
+const statesEnum = require('../models/states-enum')
 
 const LTS_PKG_NAME = 'ember-frost-lts'
+const USER_INPUT_INSTALL_PKGS = 'userInputInstallPkgs'
+const USER_INPUT_INSTALL_PKGS_CONFIRM = 'confirmInstallPkgs'
 
 module.exports = {
   description: 'Install requested packages of an LTS',
@@ -30,50 +33,119 @@ module.exports = {
 
     if (groups) {
       // Get the groups that need to be installed and required user input
-      const groupsRequireInstallation = this.getGroupsMatchingCondition(groups, this.isPkgInstallationRequired)
-      let groupRequireUserInput = groupsRequireInstallation
-      if (this.isOnLts(existingPkgs)) {
-        groupRequireUserInput = this.getGroupsMatchingCondition(groupRequireUserInput, this.isUserInputRequired)
-      }
+      // const groupsRequireInstallation = this.getGroupsMatchingCondition(groups, this.isPkgInstallationRequired)
+      // let groupRequireUserInput = groupsRequireInstallation
+      // if (this.isOnLts(existingPkgs)) {
+      //   groupRequireUserInput = this.getGroupsMatchingCondition(groupRequireUserInput, this.isUserInputRequired)
+      // }
 
-      // Get the messages to prompt the user with
-      const messagesPerGroup = this.getMessagesPerGroup(groupRequireUserInput)
-      // TODO validate that if we don't need user input we will still go here
-      let packages = []
-      return this.promptUser(messagesPerGroup).then((actions) => {
-        for (let name in groups) {
-          let action = this.getAction(name, actions, groupsRequireInstallation, groupRequireUserInput)
-
-          const group = groups[name]
-          let chalkColor = chalk.yellow
-
-          if (action === actionsEnum.OVERWRITE || action === actionsEnum.AUTO_OVERWRITE) {
-            let pkgs = this.getPackagesToInstall(name, group)
-            if (pkgs) {
-              packages = packages.concat(pkgs)
-            }
-            chalkColor = chalk.red
-          } else if (action === actionsEnum.DIFF) {
-            this.console.log('There is a diff')
+      const promise = this.installPkgs(groups)
+      if (promise) {
+        return promise.then((packages) => {
+          console.log('install pkgs done', packages)
+          if (packages && packages.length > 0) {
+            return this.addAddonsToProject({
+              packages: packages
+            })
           }
-
-          console.log(`  ${chalkColor(action)} ${this.getGroupToStr(name, group)}`)
-        }
-
-        if (packages && packages.length > 0) {
-          return this.addAddonsToProject({
-            packages: packages
-          })
+        })
+      }
+    }
+  },
+  installPkgs (groups) {
+    const promise = this.selectPkgs(groups)
+    if (promise) {
+      return promise.then((userInput) => {
+        const actionByGroup = this.getActionByGroup(groups, userInput[USER_INPUT_INSTALL_PKGS])
+        this.displaySummary(groups, actionByGroup)
+        if (this.isConfirmationRequired(actionByGroup)) {
+          return this.confirmPkgsSelection(groups, actionByGroup)
         }
       })
     }
+  },
+  isConfirmationRequired (actionByGroup) {
+    if (actionByGroup) {
+      for (let groupName in actionByGroup) {
+        const action = actionByGroup[groupName]
+        if (action !== actionsEnum.IDENTICAL) {
+          return true
+        }
+      }
+    }
+    return false
+  },
+  selectPkgs (groups) {
+    return this.getUserInputForGroups(groups, USER_INPUT_INSTALL_PKGS, 'Available packages')
+  },
+  displaySummary (groups, actionByGroup) {
+    console.log(this.getSummary(groups, actionByGroup))
+  },
+  confirmPkgsSelection (groups, actionByGroup) {
+    return this.getConfirmationUserInput(USER_INPUT_INSTALL_PKGS_CONFIRM, 'Would you like to confirm the following choices')
+      .then((confirmUserInput) => {
+        if (confirmUserInput[USER_INPUT_INSTALL_PKGS_CONFIRM]) {
+          return this.getPackagesToInstall(groups, actionByGroup)
+        } else {
+          return this.installPkgs(groups)
+        }
+      })
+  },
+  getActionByGroup (groups, userInputs) {
+    let actionByGroup = {}
+    if (groups) {
+      for (let groupName in groups) {
+        const group = groups[groupName]
+
+
+        let action = actionsEnum.SKIP
+        if (userInputs && userInputs.indexOf(groupName) > -1) {
+          action = actionsEnum.OVERWRITE
+        } else {
+          // TODO add mandatory packages
+          if (group.state === statesEnum.INSTALLED) {
+            action = actionsEnum.IDENTICAL
+          }
+        }
+
+        actionByGroup[groupName] = action
+      }
+    }
+
+    return actionByGroup
+  },
+  getSummary (groups, actionByGroup) {
+    let summary = 'Summary\n'
+    for (let groupName in groups) {
+      const group = groups[groupName]
+      const action = actionByGroup[groupName]
+      summary += `${this.getGroupSummary(groupName, group, action)}\n`
+    }
+    return summary
+  },
+  getGroupSummary (name, group, action) {
+    if (name && group && action) {
+      return `   ${this.getActionToStr(action)} ${this.getGroupToStr(name, group)}`
+    }
+  },
+  getPackagesToInstall (groups, actionByGroup) {
+    let packages = []
+    for (let groupName in groups) {
+      const group = groups[groupName]
+      const action = actionByGroup[groupName]
+
+      if (action === actionsEnum.OVERWRITE) {
+        packages = packages.concat(this.getPackagesToInstallByGroup(group))
+      }
+    }
+    return packages
   },
   /**
    * Returns true if the application/addon is on an LTS and false otherwise.
    * @param {object} existingPkgs the existing packages
    * @returns {boolean} true if the application/addon is on an LTS and false otherwise
    */
-  isOnLts (existingPkgs) {
+  isThisAddonInstalled (existingPkgs) {
     return existingPkgs[LTS_PKG_NAME] !== undefined
   },
   /**
@@ -146,46 +218,6 @@ module.exports = {
     return pkg.installedTarget === undefined
   },
   /**
-   * Get a the messages we will ask to the user.
-   * @param {object} groups the groups
-   * @returns {object} the messages
-   */
-  getMessagesPerGroup (groups) {
-    let messages = {}
-    for (let name in groups) {
-      const message = this.getGroupToStr(name, groups[name])
-      if (message) {
-        messages[name] = message
-      }
-    }
-    return messages
-  },
-  /**
-   * Prompt the user with a message.
-   * @param {object} messagesPerGroup the message to ask per group
-   * @returns {Promise} the prompt Promise
-   */
-  promptUser (messagesPerGroup) {
-    let userPrompts = []
-    for (let group in messagesPerGroup) {
-      let message = messagesPerGroup[group]
-      if (message) {
-        userPrompts.push({
-          type: 'expand',
-          name: group,
-          message: `${chalk.red(this.capitalizeFirstLetter(actionsEnum.OVERWRITE))} ${message}?`,
-          choices: [
-            { key: 'y', name: 'Yes, overwrite', value: actionsEnum.OVERWRITE },
-            { key: 'n', name: 'No, skip', value: actionsEnum.SKIP },
-            { key: 'd', name: 'Diff', value: actionsEnum.DIFF }
-          ]
-        })
-      }
-    }
-
-    return this.ui.prompt(userPrompts)
-  },
-  /**
    * Get the group to string.
    * @param {string} name the name of the group
    * @param {object} group the group
@@ -214,7 +246,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {array} a list of packages
    */
-  getPackagesToInstall (name, group) {
+  getPackagesToInstallByGroup (group) {
     return this.getGroupPackages(group, this.getPackageToInstall)
   },
   /**
@@ -297,6 +329,8 @@ module.exports = {
    * @returns {object} the groups of packages
    */
   createGroups (requestedGroupsNPkgs, existingPkgs) {
+    const isThisAddonInstalled = this.isThisAddonInstalled(existingPkgs)
+    // TODO refactor
     let groups = {}
     for (let groupNPkgName in requestedGroupsNPkgs) {
       let pkgs = {}
@@ -306,6 +340,7 @@ module.exports = {
         const group = requestGroupNPkg
 
         if (this.isValidGroup(group)) {
+          let state = statesEnum.INSTALLED
           const requestedPkgs = this.getGroupPkgs(group)
           for (let pkgName in requestedPkgs) {
             const target = requestedPkgs[pkgName]
@@ -317,8 +352,8 @@ module.exports = {
             }
           }
 
-          if (pkgs && !_.isEmpty(pkgs)) {
-            groups[groupNPkgName] = this.createGroup(pkgs)
+          if (state && pkgs && !_.isEmpty(pkgs)) {
+            groups[groupNPkgName] = this.createGroup(pkgs, isThisAddonInstalled)
           }
         } else {
           console.log(`Invalid group: ${groupNPkgName}`)
@@ -328,7 +363,7 @@ module.exports = {
         const name = groupNPkgName
 
         if (this.isValidPkg(name, target)) {
-          groups[name] = this.createGroupFromPackage(name, this.createPkg(name, target, existingPkgs))
+          groups[name] = this.createGroupFromPackage(name, this.createPkg(name, target, existingPkgs), isThisAddonInstalled)
         } else {
           console.log(`Invalid package: ${name}`)
         }
@@ -342,10 +377,29 @@ module.exports = {
    * @param {object} packages contains a all the packages for a group
    * @returns {object} a group
    */
-  createGroup (packages) {
-    let group = { isGroup: true }
+  createGroup (packages, isThisAddonInstalled) {
+    let group = { state: this.getGroupState(packages), isGroup: true, isThisAddonInstalled: isThisAddonInstalled }
     group['packages'] = packages
     return group
+  },
+  getGroupState (packages) {
+    // TODO refactor
+    let pkgsState = { }
+
+    for (let name in packages) {
+      const pkg = packages[name]
+      pkgsState[pkg.state] = {}
+    }
+
+    if (pkgsState[statesEnum.MANDATORY]) {
+      return statesEnum.MANDATORY
+    } else if (pkgsState[statesEnum.NEW]) {
+      return statesEnum.NEW
+    } else if (pkgsState[statesEnum.NEED_UPDATE]) {
+      return statesEnum.NEED_UPDATE
+    } else if (pkgsState[statesEnum.INSTALLED]) {
+      return statesEnum.INSTALLED
+    }
   },
   /**
    * Create a group from a package.
@@ -353,9 +407,11 @@ module.exports = {
    * @param {objec} pkg the package
    * @returns {object} a group
    */
-  createGroupFromPackage (name, pkg) {
-    let group = this.createGroup({})
+  createGroupFromPackage (name, pkg, isThisAddonInstalled) {
+    // TODO try to clean this method + try to use other method (createGroup)
+    let group = this.createGroup({}, isThisAddonInstalled)
     group.isGroup = false
+    group.state = pkg.state
     group.packages[name] = pkg
     return group
   },
@@ -370,8 +426,20 @@ module.exports = {
     const existingTarget = existingPkgs[name]
     return {
       target: requestedTarget,
-      installedTarget: existingTarget
+      installedTarget: existingTarget,
+      state: this.getPkgState(requestedTarget, existingTarget)
     }
+  },
+  getPkgState (requestedTarget, existingTarget) {
+    let state = statesEnum.NEW
+    if (existingTarget !== undefined) {
+      if (requestedTarget === existingTarget) {
+        state = statesEnum.INSTALLED
+      } else {
+        state = statesEnum.NEED_UPDATE
+      }
+    }
+    return state
   },
   /**
    * Returns true if is a valid group and false otherwise.
@@ -397,8 +465,88 @@ module.exports = {
    */
   capitalizeFirstLetter (text) {
     return text.charAt(0).toUpperCase() + text.slice(1)
+  },
+  getChoiceForGroup (context, name, group) {
+    const isInstalledOrMandatory = group.state === statesEnum.INSTALLED ||
+                      group.state === statesEnum.MANDATORY
+    const isAutomaticUpdate = group.state === statesEnum.NEED_UPDATE &&
+                              group.isThisAddonInstalled
+    return {
+      value: name,
+      name: context.getGroupToStr(name, group),
+      checked: isInstalledOrMandatory || isAutomaticUpdate,
+      disabled: (isInstalledOrMandatory) ? group.state : false
+    }
+  },
+  getUserInputForGroups (groups, inputName, inputMessage) {
+    let choices = this.getChoices(groups, this.getChoiceForGroup)
+    if (!_.isEmpty(choices)) {
+      return this.getUserInputForChoice('checkbox', inputName, inputMessage, choices)
+    }
+  },
+  getUserInputForChoice (type, inputName, inputMessage, choices) {
+    let userInput
+    if (choices) {
+      userInput = this.getUserInput(type, inputName, inputMessage, choices)
+    }
+
+    if (userInput) {
+      return this.promptUser([userInput])
+    }
+  },
+  getConfirmationUserInput (inputName, inputMessage) {
+    return this.getUserInputForChoice('confirm', inputName, inputMessage, [])
+  },
+  // -------- User input -------- //
+  getChoices (entities, getChoiceForEntityFct) {
+    let choices = []
+
+    if (entities && getChoiceForEntityFct) {
+      for (let entityId in entities) {
+        const entity = entities[entityId]
+
+        choices.push(getChoiceForEntityFct(this, entityId, entity))
+      }
+    }
+
+    return choices
+  },
+  getUserInput (type, name, message, choices) {
+    if (type && name && message && choices) {
+      let userInput = {
+        type: type,
+        name: name,
+        message: message
+      }
+      if (!_.isEmpty(choices)) {
+        userInput['choices'] = choices
+      }
+
+      return userInput
+    }
+  },
+  promptUser (userInputs) {
+    return this.ui.prompt(userInputs)
+  },
+  getActionToStr (action) {
+    const chalkColor = this.getChalkColorForAction(action)
+    return chalkColor(action)
+  },
+  getChalkColorForAction (action) {
+    if (action === actionsEnum.IDENTICAL || action === actionsEnum.SKIP) {
+      return chalk.yellow
+    } else if (action === actionsEnum.OVERWRITE) {
+      return chalk.red
+    }
   }
 }
+
+// TODO
+// Mandatory (auto check + disable + to install)
+
+
+
+
 
 // Diff
 // diffHighlight (line) {

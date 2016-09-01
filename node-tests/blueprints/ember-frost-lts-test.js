@@ -21,7 +21,8 @@ const requireFromCLI = require('ember-cli-blueprint-test-helpers/lib/helpers/req
 const Blueprint = requireFromCLI('lib/models/blueprint')
 const MockUI = requireFromCLI('tests/helpers/mock-ui')
 
-const actionsEnum = require('../../blueprints/models/actions-enum')
+const actionHandler = require('../../blueprints/lib/models/action')
+const actionsEnum = actionHandler.actionsEnum
 
 /**
  * Expected behavior

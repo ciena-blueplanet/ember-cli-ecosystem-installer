@@ -8,6 +8,8 @@ const statesEnum = stateHandler.statesEnum
 const actionHandler = require('../models/action')
 const actionsEnum = actionHandler.actionsEnum
 
+const STATES_BY_PRIORITY = [statesEnum.MANDATORY, statesEnum.NEW, statesEnum.NEED_UPDATE, statesEnum.INSTALLED]
+
 module.exports = {
   /**
    * Get the group to string.
@@ -125,28 +127,26 @@ module.exports = {
     let group = {
       state: this.getGroupState(packages),
       isGroup: true,
-      isThisAddonInstalled: isThisAddonInstalled
+      isThisAddonInstalled: isThisAddonInstalled,
+      packages: packages
     }
-    group['packages'] = packages
     return group
   },
-  // TODO refactor
   getGroupState (packages) {
-    let pkgsState = { }
+    let states = {}
 
     for (let name in packages) {
       const pkg = packages[name]
-      pkgsState[pkg.state] = {}
+      states[pkg.state] = {}
     }
 
-    if (pkgsState[statesEnum.MANDATORY]) {
-      return statesEnum.MANDATORY
-    } else if (pkgsState[statesEnum.NEW]) {
-      return statesEnum.NEW
-    } else if (pkgsState[statesEnum.NEED_UPDATE]) {
-      return statesEnum.NEED_UPDATE
-    } else if (pkgsState[statesEnum.INSTALLED]) {
-      return statesEnum.INSTALLED
+    // Get the group state based on the priority of the states
+    // Ex. If there is one of the package that is manadatory then
+    // the group is considered as mandatory
+    for (let state of STATES_BY_PRIORITY) {
+      if (states[state]) {
+        return state
+      }
     }
   },
   /**
@@ -155,13 +155,13 @@ module.exports = {
    * @param {objec} pkg the package
    * @returns {object} a group
    */
-  // TODO refactor
   createGroupFromPackage (name, pkg, isThisAddonInstalled) {
-    // TODO try to clean this method + try to use other method (createGroup)
-    let group = this.createGroup({}, isThisAddonInstalled)
+    const packages = {}
+    packages[name] = pkg
+
+    let group = this.createGroup(packages, isThisAddonInstalled)
     group.isGroup = false
-    group.state = pkg.state
-    group.packages[name] = pkg
+
     return group
   },
   /**
@@ -182,7 +182,6 @@ module.exports = {
         action = actionsEnum.IDENTICAL
       }
     }
-    console.log(name, isInUserInput, action)
     return action
   },
   isConfirmationRequiredForGroup(action) {

@@ -57,15 +57,16 @@ module.exports = {
    * @returns {array} a list of packages
    */
   getGroupPkgs (group) {
-    return group.packages
+    if (group && group.packages) {
+      return group.packages
+    }
   },
   /**
    * Returns true if is a valid group and false otherwise.
    * @param {object} group a group
    * @returns {boolean} true if is a valid group and false otherwise
    */
-  isValidGroup (group) {
-    const pkgs = this.getGroupPkgs(group)
+  isValidGroup (pkgs) {
     return pkgs && !_.isEmpty(pkgs)
   },
   /**
@@ -75,44 +76,24 @@ module.exports = {
    * @param {object} existingPkgs the existing packages
    * @returns {object} the groups of packages
    */
-  // TODO refactor
   createGroups (requestedGroupsNPkgs, existingPkgs, isThisAddonInstalled) {
     let groups = {}
     for (let groupNPkgName in requestedGroupsNPkgs) {
-      let pkgs = {}
-
       const requestGroupNPkg = requestedGroupsNPkgs[groupNPkgName]
-      if (this.isGroup(requestGroupNPkg)) {
-        const group = requestGroupNPkg
 
-        if (this.isValidGroup(group)) {
-          let state = statesEnum.INSTALLED
-          const requestedPkgs = this.getGroupPkgs(group)
-          for (let pkgName in requestedPkgs) {
-            const target = requestedPkgs[pkgName]
-
-            if (packageHandler.isValidPkg(pkgName, target)) {
-              pkgs[pkgName] = packageHandler.createPkg(pkgName, target, existingPkgs)
-            } else {
-              console.log(`Invalid package: ${pkgName}`)
-            }
-          }
-
-          if (state && pkgs && !_.isEmpty(pkgs)) {
-            groups[groupNPkgName] = this.createGroup(pkgs, isThisAddonInstalled)
-          }
-        } else {
-          console.log(`Invalid group: ${groupNPkgName}`)
-        }
+      let requestedPkgs = {}
+      let isGroup = this.isGroup(requestGroupNPkg)
+      if (isGroup) {
+        requestedPkgs = this.getGroupPkgs(requestGroupNPkg)
       } else {
-        const target = requestedGroupsNPkgs[groupNPkgName]
-        const name = groupNPkgName
+        requestedPkgs[groupNPkgName] = requestGroupNPkg
+      }
 
-        if (packageHandler.isValidPkg(name, target)) {
-          groups[name] = this.createGroupFromPackage(name, packageHandler.createPkg(name, target, existingPkgs), isThisAddonInstalled)
-        } else {
-          console.log(`Invalid package: ${name}`)
-        }
+      let pkgs = packageHandler.createPkgs(requestedPkgs, existingPkgs)
+
+      const group = this.createGroup(groupNPkgName, pkgs, isGroup, isThisAddonInstalled)
+      if (group) {
+        groups[groupNPkgName] = group
       }
     }
 
@@ -123,14 +104,19 @@ module.exports = {
    * @param {object} packages contains a all the packages for a group
    * @returns {object} a group
    */
-  createGroup (packages, isThisAddonInstalled) {
-    let group = {
-      state: this.getGroupState(packages),
-      isGroup: true,
-      isThisAddonInstalled: isThisAddonInstalled,
-      packages: packages
+  createGroup (name, packages, isGroup, isThisAddonInstalled) {
+    console.log(name, packages)
+    if (this.isValidGroup(packages)) {
+      let group = {
+        state: this.getGroupState(packages),
+        isGroup: isGroup,
+        isThisAddonInstalled: isThisAddonInstalled,
+        packages: packages
+      }
+      return group
+    } else {
+      console.log(`Invalid group: ${name}`)
     }
-    return group
   },
   getGroupState (packages) {
     let states = {}
@@ -170,6 +156,7 @@ module.exports = {
    * @returns {boolean} true if it's a group and false otherwise.
    */
   isGroup (group) {
+    console.log(this.getGroupPkgs(group))
     return this.getGroupPkgs(group) !== undefined
   },
   getActionForGroup (name, group, isInUserInput) {

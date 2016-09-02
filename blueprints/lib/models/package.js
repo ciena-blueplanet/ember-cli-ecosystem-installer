@@ -20,13 +20,29 @@ module.exports = {
    * @param {object} existingPkgs the existing packages
    * @returns {object} a package
    */
-  createPkg (name, requestedTarget, existingPkgs) {
-    const existingTarget = existingPkgs[name]
-    return {
-      target: requestedTarget,
-      installedTarget: existingTarget,
-      state: this.getPkgState(requestedTarget, existingTarget)
+  createPkg (name, target, existingPkgs) {
+    if (this.isValidPkg(name, target)) {
+      const existingTarget = existingPkgs[name]
+      return {
+        target: target,
+        installedTarget: existingTarget,
+        state: this.getPkgState(target, existingTarget)
+      }
+    } else {
+      console.log(`Invalid package: ${name}`)
     }
+  },
+  createPkgs (packages, existingPkgs) {
+    let pkgs = {}
+    for (let name in packages) {
+      const target = packages[name]
+
+      const pkg = this.createPkg(name, target, existingPkgs)
+      if (pkg) {
+        pkgs[name] = pkg
+      }
+    }
+    return pkgs
   },
   getPkgState (requestedTarget, existingTarget) {
     let state = statesEnum.NEW

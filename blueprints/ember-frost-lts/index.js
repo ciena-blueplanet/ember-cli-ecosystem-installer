@@ -12,6 +12,9 @@ const objUtil = require('../../lib/utils/obj')
 const USER_INPUT_INSTALL_PKGS = 'userInputInstallPkgs'
 const USER_INPUT_INSTALL_PKGS_CONFIRM = 'confirmInstallPkgs'
 
+const INSTALL_PKGS_MSG = 'Available packages'
+const CONFIRMATION_MSG = 'Would you like to confirm the following choices'
+
 module.exports = {
   description: 'Install requested packages',
   availableOptions: [
@@ -95,7 +98,7 @@ module.exports = {
    * @returns {Promise} a promise that will return the user inputs
    */
   selectPkgs (groups) {
-    return this.getUserInputForGroups(groups, USER_INPUT_INSTALL_PKGS, 'Available packages')
+    return this.getUserInputForGroups(groups, USER_INPUT_INSTALL_PKGS, INSTALL_PKGS_MSG)
   },
   /**
    * Prompt the user to confirm the actions selected for each group.
@@ -105,7 +108,7 @@ module.exports = {
    *          {object} a list of the packages to install
    */
   confirmPkgsSelection (groups, actionByGroup) {
-    return this.getConfirmationUserInput(USER_INPUT_INSTALL_PKGS_CONFIRM, 'Would you like to confirm the following choices')
+    return this.getConfirmationUserInput(USER_INPUT_INSTALL_PKGS_CONFIRM, CONFIRMATION_MSG)
       .then((confirmuserInputHandler) => {
         if (confirmuserInputHandler[USER_INPUT_INSTALL_PKGS_CONFIRM]) {
           return this.getPackagesToInstall(groups, actionByGroup)
@@ -149,7 +152,7 @@ module.exports = {
   },
   /**
    * Prompt the user with a set of choices for the groups.
-   * @param {object} group a group
+   * @param {object} groups an object containing all the groups
    * @param {string} inputName the name of the user input
    * @param {string} inputMessage the message that will be prompt to the user
    * @returns {Promise} the promise containing the user input

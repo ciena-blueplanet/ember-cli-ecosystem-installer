@@ -21,7 +21,7 @@ const requireFromCLI = require('ember-cli-blueprint-test-helpers/lib/helpers/req
 const Blueprint = requireFromCLI('lib/models/blueprint')
 const MockUI = requireFromCLI('tests/helpers/mock-ui')
 
-const actionHandler = require('../../blueprints/lib/models/action')
+const actionHandler = require('../../lib/models/action')
 const actionsEnum = actionHandler.actionsEnum
 
 /**
@@ -402,6 +402,114 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
               .to.contain('ember-prop-types@~0.2.0'))
         })
       })
+    })
+  })
+
+  describe('Mandatory', function () {
+    let args
+    beforeEach(function () {
+      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts-mandatory.json']
+    })
+
+    it('Already installed package', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => modifyPackages([
+          {name: 'my-package-m', version: '0.2.0', dev: true}       // installed
+        ]))
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.be.eql(null))
+    })
+
+    it('Package require update', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        // We need to mock this but those will be selected by default since this package is mandatory
+        userInputInstallPkgs: [ 'my-package-m'],
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => modifyPackages([
+          {name: 'my-package-m', version: '0.1.0', dev: true}       // to update
+        ]))
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.have.lengthOf(1)
+          .to.contain('my-package-m@0.2.0'))
+    })
+
+    it('New package', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        // We need to mock this but those will be selected by default since this package is mandatory
+        userInputInstallPkgs: [ 'my-package-m'],
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.have.lengthOf(1)
+          .to.contain('my-package-m@0.2.0'))
+    })
+  })
+
+  describe('Mandatory + Optional', function () {
+    let args
+    beforeEach(function () {
+      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts-mandatory-optional.json']
+    })
+
+    it('Already installed package', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => modifyPackages([
+          {name: 'my-package-m', version: '0.2.0', dev: true},      // installed
+          {name: 'my-package', version: '0.2.0', dev: true}         // installed
+        ]))
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.be.eql(null))
+    })
+
+    it('Package require update', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
+        userInputInstallPkgs: [ 'my-package-m', 'my-package'],
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => modifyPackages([
+          {name: 'my-package-m', version: '0.1.0', dev: true},      // to update
+          {name: 'my-package', version: '0.1.0', dev: true}         // to update
+        ]))
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.have.lengthOf(2)
+          .to.contain('my-package-m@0.2.0')
+          .to.contain('my-package@0.2.0'))
+    })
+
+    it('New package', function () {
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
+        userInputInstallPkgs: [ 'my-package-m', 'my-package'],
+        confirmInstallPkgs: 'y'
+      })
+
+      return emberNew()
+        .then(() => emberGenerate(args))
+        .then(() => expect(packages)
+          .to.have.lengthOf(2)
+          .to.contain('my-package-m@0.2.0')
+          .to.contain('my-package@0.2.0'))
     })
   })
 })

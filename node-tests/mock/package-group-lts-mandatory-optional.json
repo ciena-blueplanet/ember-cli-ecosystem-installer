@@ -1,0 +1,6 @@
+{
+  "mandatory": {
+    "my-package-m": "0.2.0"
+  },
+  "my-package": "0.2.0"
+}

@@ -9,7 +9,7 @@
   "scripts": {
     "build": "ember build",
     "start": "ember server",
-    "test": "npm run-script utest",
+    "test": "npm run-script lint && npm run-script utest",
     "utest": "mocha node-tests --recursive",
     "lint": "eslint *.js addon app blueprints config tests"
   },

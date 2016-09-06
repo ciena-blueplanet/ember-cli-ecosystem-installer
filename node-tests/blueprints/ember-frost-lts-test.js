@@ -217,6 +217,49 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
             .to.contain('ember-d3@0.2.0')
             .to.contain('ember-frost-core@0.25.3'))
       })
+
+      it('Group containing only packages to update', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          // Same test for LTS and non LTS because we need to mock this but those will be selected by default since we
+          // are on an LTS and that we already have those packages in our package.json
+          userInputInstallPkgs: ['package3', 'package4'],
+          confirmInstallPkgs: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'my-package', version: '0.1.0', dev: true},        // to update
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+            {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packages)
+            .to.have.lengthOf(3)
+            .to.contain('my-package@0.2.0')
+            .to.contain('ember-d3@0.2.0')
+            .to.contain('ember-frost-core@0.25.3'))
+      })
+
+      it('Group containing package already installed and package to update', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          // Same test for LTS and non LTS because we need to mock this but those will be selected by default since we
+          // are on an LTS and that we already have those packages in our package.json
+          userInputInstallPkgs: ['package4'],
+          confirmInstallPkgs: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'my-package', version: '0.2.0', dev: true},        // installed
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packages)
+            .to.have.lengthOf(2)
+            .to.contain('ember-d3@0.2.0')
+            .to.contain('ember-frost-core@0.25.3'))
+      })
     })
 
     describe('Single packages', function () {
@@ -251,47 +294,6 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     })
 
     describe('Non LTS', function () {
-      describe('Group', function () {
-        it('Group containing only packages to update', function () {
-          td.when(prompt(td.matchers.anything())).thenResolve({
-            userInputInstallPkgs: ['package3', 'package4'],
-            confirmInstallPkgs: 'y'
-          })
-
-          return emberNew()
-            .then(() => modifyPackages([
-              {name: 'my-package', version: '0.1.0', dev: true},        // to update
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-            ]))
-            .then(() => emberGenerate(args))
-            .then(() => expect(packages)
-              .to.have.lengthOf(3)
-              .to.contain('my-package@0.2.0')
-              .to.contain('ember-d3@0.2.0')
-              .to.contain('ember-frost-core@0.25.3'))
-        })
-
-        it('Group containing package already installed and package to update', function () {
-          td.when(prompt(td.matchers.anything())).thenResolve({
-            userInputInstallPkgs: ['package4'],
-            confirmInstallPkgs: 'y'
-          })
-
-          return emberNew()
-            .then(() => modifyPackages([
-              {name: 'my-package', version: '0.2.0', dev: true},        // installed
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-            ]))
-            .then(() => emberGenerate(args))
-            .then(() => expect(packages)
-              .to.have.lengthOf(2)
-              .to.contain('ember-d3@0.2.0')
-              .to.contain('ember-frost-core@0.25.3'))
-        })
-      })
-
       describe('Single package', function () {
         beforeEach(function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
@@ -322,51 +324,6 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     })
 
     describe('LTS', function () {
-      describe('Group', function () {
-        it('Group containing only packages to update', function () {
-          td.when(prompt(td.matchers.anything())).thenResolve({
-            // We need to mock this but those will be selected by default since we are on an LTS and
-            // that we already have those packages in our package.json
-            userInputInstallPkgs: ['package3', 'package4'],
-            confirmInstallPkgs: 'y'
-          })
-
-          return emberNew()
-            .then(() => modifyPackages([
-              {name: 'my-package', version: '0.1.0', dev: true},        // to update
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-            ]))
-            .then(() => emberGenerate(args))
-            .then(() => expect(packages)
-              .to.have.lengthOf(3)
-              .to.contain('my-package@0.2.0')
-              .to.contain('ember-d3@0.2.0')
-              .to.contain('ember-frost-core@0.25.3'))
-        })
-
-        it('Group containing package already installed and package to update', function () {
-          td.when(prompt(td.matchers.anything())).thenResolve({
-            // We need to mock this but those will be selected by default since we are on an LTS and
-            // that we already have those packages in our package.json
-            userInputInstallPkgs: ['package4'],
-            confirmInstallPkgs: 'y'
-          })
-
-          return emberNew()
-            .then(() => modifyPackages([
-              {name: 'my-package', version: '0.2.0', dev: true},        // installed
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-            ]))
-            .then(() => emberGenerate(args))
-            .then(() => expect(packages)
-              .to.have.lengthOf(2)
-              .to.contain('ember-d3@0.2.0')
-              .to.contain('ember-frost-core@0.25.3'))
-        })
-      })
-
       describe('Single package', function () {
         it('New packages', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({

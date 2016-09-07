@@ -320,14 +320,11 @@ module.exports = {
         console.log(this.getSummary(groups, actionByGroup))
         // Confirm choices
         return this.getConfirmedPkgsSelected(
-          groups,
           actionByGroup,
-          this.getPackagesToModify.bind(this),
-          question,
-          getChoicesFct,
-          getActionByGroupFct,
-          userInputs,
-          this.getSelectedPkgs.bind(this))
+          { fct: this.getPackagesToModify.bind(this),
+            params: {groups, actionByGroup}},
+          { fct: this.getSelectedPkgs.bind(this),
+            params: {groups, question, getChoicesFct, getActionByGroupFct, userInputs}})
       })
     }
   },
@@ -363,25 +360,22 @@ module.exports = {
   },
   /**
    * Prompt the user to confirm the actions selected for each group.
-   * @param {object} groups all the groups the user can select
    * @param {object} actionByGroup the action that will be done for each group
-   * @param {function} getSelectedFct the function call to get the selected packages
-   * @param {object} question the question to ask to the user
-   * @param {function} getChoicesFct the function call to get the choices
-   * @param {function} getActionByGroupFct the function call to get the actiond by group
-   * @param {object} userInputs the user inputs
-   * @param {function} goBackToSelectionFct the function call to get go back to the selection
+   * @param {object} getSelected the function call to get the selected packages and it's parameters
+   * @param {object} goBackToSelection the function call to get go back to the selection and it's parameters
    * @returns {Promise} a promise that will return back the user to the selection or
    *          {object} a list of the packages selected
    */
-  getConfirmedPkgsSelected (groups, actionByGroup, getSelectedFct, question, getChoicesFct, getActionByGroupFct,
-      userInputs, goBackToSelectionFct) {
+  getConfirmedPkgsSelected (actionByGroup, getSelected, goBackToSelection) {
     if (this.isConfirmationRequired(actionByGroup)) {
       return this.getConfirmationUserInput(QUESTION_CONFIRM).then((confirmUserInput) => {
         if (confirmUserInput[QUESTION_CONFIRM.name]) {
-          return getSelectedFct(groups, actionByGroup)
+          const params = getSelected.params
+          return getSelected.fct(params.groups, params.actionByGroup)
         } else {
-          return goBackToSelectionFct(groups, question, getChoicesFct, getActionByGroupFct, userInputs)
+          const params = goBackToSelection.params
+          return goBackToSelection.fct(params.groups, params.question, params.getChoicesFct,
+            params.getActionByGroupFct, params.userInputs)
         }
       })
     }
@@ -453,6 +447,5 @@ module.exports = {
   }
 }
 
-// TODO reselect confirm go back
 // Tests
 

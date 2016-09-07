@@ -146,8 +146,8 @@ module.exports = {
     return this.getSelectedPkgs(
       groups,
       QUESTION_INSTALL,
-      this.getChoiceForGroupInstall.bind(this),
-      this.getActionForGroupForInstall)
+      this.getChoiceForGroupOnInstall.bind(this),
+      this.getActionForGroupOnInstall)
   },
   /**
    * Get the action that will need to be done for a group.
@@ -156,7 +156,7 @@ module.exports = {
    * @param {boolean} isInUserInput true if the user selected that group and false otherwise
    * @returns {string} the action for this group
    */
-  getActionForGroupForInstall (name, group, isInUserInput) {
+  getActionForGroupOnInstall (name, group, isInUserInput) {
     let action = actionsEnum.SKIP
 
     if (group.state === statesEnum.INSTALLED) {
@@ -170,15 +170,15 @@ module.exports = {
    * Get the choices for a group.
    * @param {string} name the name of the group
    * @param {object} group a group
-   * @param {boolean} isSelectedByUser true is the user already selected that value
+   * @param {boolean} wasInUserInput true is the user previously selected that choice
    * @returns {object} the choice for a group
    */
-  getChoiceForGroupInstall (name, group, isSelectedByUser) {
+  getChoiceForGroupOnInstall (name, group, wasInUserInput) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
-      checked: isSelectedByUser || this.isSelectedByDefaultForInstall(group),
-      disabled: this.isDisabledByDefaultForInstall(group)
+      checked: wasInUserInput || this.isSelectedByDefaultOnInstall(group),
+      disabled: this.isDisabledByDefaultOnInstall(group)
     }
   },
   /**
@@ -186,7 +186,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is selected by default and false otherwise
    */
-  isSelectedByDefaultForInstall (group) {
+  isSelectedByDefaultOnInstall (group) {
     return group.state === statesEnum.INSTALLED || group.isMandatory || this.isCandidateForAutomaticUpdate(group)
   },
   /**
@@ -202,7 +202,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is disabled by default and false otherwise
    */
-  isDisabledByDefaultForInstall (group) {
+  isDisabledByDefaultOnInstall (group) {
     if (group.state === statesEnum.INSTALLED) {
       return group.state
     } else if (group.isMandatory) {
@@ -250,8 +250,8 @@ module.exports = {
     return this.getSelectedPkgs(
       groups,
       QUESTION_UNINSTALL,
-      this.getChoiceForGroupUninstall,
-      this.getActionForGroupForUninstall)
+      this.getChoiceForGroupOnUninstall,
+      this.getActionForGroupOnUninstall)
   },
   /**
    * Get the action that will need to be done for a group.
@@ -260,7 +260,7 @@ module.exports = {
    * @param {boolean} isInUserInput true if the user selected that group and false otherwise
    * @returns {string} the action for this group
    */
-  getActionForGroupForUninstall (name, group, isInUserInput) {
+  getActionForGroupOnUninstall (name, group, isInUserInput) {
     let action = actionsEnum.SKIP
 
     if (isInUserInput && group.state === statesEnum.INSTALLED) {
@@ -272,29 +272,42 @@ module.exports = {
    * Get the choices for a group.
    * @param {string} name the name of the group
    * @param {object} group a group
-   * @param {boolean} isSelectedByUser true is the user already selected that value
+   * @param {boolean} wasInUserInput true is the user previously selected that choice
    * @returns {object} the choice for a group
    */
-  getChoiceForGroupUninstall (name, group, isSelectedByUser) {
+  getChoiceForGroupOnUninstall (name, group, wasInUserInput) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
-      checked: isSelectedByUser || false,
+      checked: wasInUserInput || false,
       disabled: false
     }
   },
 
   // == User Input ============================================================
   /**
+   * Get choices for the groups based on the function passed in parameter.
+   * @param {object} groups all the groups the user can select
+   * @param {object} question the question to ask to the user
+   * @param {function} getChoicesFct the function call to get the choices
+   * @param {object} previousUserInputs the previous user inputs (will be null on the first call of this method)
+   * @returns {object} all the choices
+   */
+  getChoices (groups, question, getChoicesFct, previousUserInputs) {
+    const choicesSelectedPreviously = (previousUserInputs !== undefined) ? previousUserInputs[question.name] : []
+    return userInputHandler.getChoices(groups, getChoicesFct, choicesSelectedPreviously)
+  },
+  /**
    * Get the selection of the user.
    * @param {object} groups all the groups the user can select
    * @param {object} question the question to ask to the user
    * @param {function} getChoicesFct the function call to get the choices
-   * @param {function} getActionForGroupFct the function call to get the actiond by group
+   * @param {function} getActionByGroupFct the function call to get the actiond by group
+   * @param {object} previousUserInputs the previous user inputs (will be null on the first call of this method)
    * @returns {Promise} a promise that will return all the selected groups
    */
-  getSelectedPkgs (groups, question, getChoicesFct, getActionForGroupFct) {
-    const choices = userInputHandler.getChoices(groups, getChoicesFct)
+  getSelectedPkgs (groups, question, getChoicesFct, getActionByGroupFct, previousUserInputs) {
+    const choices = this.getChoices(groups, question, getChoicesFct, previousUserInputs)
     const promise = this.getUserInputForGroups(groups, question, choices)
     if (promise) {
       return promise.then((userInputs) => {
@@ -302,15 +315,18 @@ module.exports = {
         // the user to confirm the action for each group.
         const actionByGroup = actionHandler.getByEntity(groups,
                                         userInputs[question.name],
-                                        getActionForGroupFct)
+                                        getActionByGroupFct)
+        // Display summary
         console.log(this.getSummary(groups, actionByGroup))
+        // Confirm choices
         return this.getConfirmedPkgsSelected(
           groups,
           actionByGroup,
           this.getPackagesToModify.bind(this),
           question,
           getChoicesFct,
-          getActionForGroupFct,
+          getActionByGroupFct,
+          userInputs,
           this.getSelectedPkgs.bind(this))
       })
     }
@@ -352,19 +368,20 @@ module.exports = {
    * @param {function} getSelectedFct the function call to get the selected packages
    * @param {object} question the question to ask to the user
    * @param {function} getChoicesFct the function call to get the choices
-   * @param {function} getActionForGroupFct the function call to get the actiond by group
+   * @param {function} getActionByGroupFct the function call to get the actiond by group
+   * @param {object} userInputs the user inputs
    * @param {function} goBackToSelectionFct the function call to get go back to the selection
    * @returns {Promise} a promise that will return back the user to the selection or
    *          {object} a list of the packages selected
    */
-  getConfirmedPkgsSelected (groups, actionByGroup, getSelectedFct, question, getChoicesFct, getActionForGroupFct,
-      goBackToSelectionFct) {
+  getConfirmedPkgsSelected (groups, actionByGroup, getSelectedFct, question, getChoicesFct, getActionByGroupFct,
+      userInputs, goBackToSelectionFct) {
     if (this.isConfirmationRequired(actionByGroup)) {
       return this.getConfirmationUserInput(QUESTION_CONFIRM).then((confirmUserInput) => {
         if (confirmUserInput[QUESTION_CONFIRM.name]) {
           return getSelectedFct(groups, actionByGroup)
         } else {
-          return goBackToSelectionFct(groups, question, getChoicesFct, getActionForGroupFct)
+          return goBackToSelectionFct(groups, question, getChoicesFct, getActionByGroupFct, userInputs)
         }
       })
     }

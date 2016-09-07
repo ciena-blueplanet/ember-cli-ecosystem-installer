@@ -283,7 +283,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     it('Groups and single packages all installed', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         confirmSelection: 'y'
-       })
+      })
 
       return emberNew()
         .then(() => modifyPackages([

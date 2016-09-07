@@ -61,7 +61,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
   it('No package to install (empty file)', function () {
     const args = ['ember-frost-lts', '--lts-file=node-tests/mock/empty-lts.json']
-    td.when(prompt(td.matchers.anything())).thenResolve({ })
+    td.when(prompt(td.matchers.anything())).thenResolve({
+      confirmSelection: 'y'
+    })
 
     return emberNew()
       .then(() => emberGenerate(args))
@@ -73,7 +75,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     const args = ['ember-frost-lts', '--lts-file=node-tests/mock/single-package-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
       userInputInstallPkgs: ['ember-prop-types'],
-      confirmInstallPkgs: 'y'
+      confirmSelection: 'y'
     })
 
     return emberNew()
@@ -87,7 +89,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     const args = ['ember-frost-lts', '--lts-file=node-tests/mock/single-group-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
       userInputInstallPkgs: ['package3'],
-      confirmInstallPkgs: 'y'
+      confirmSelection: 'y'
     })
 
     return emberNew()
@@ -102,7 +104,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
         userInputInstallPkgs: ['package3'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -116,7 +118,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
         userInputInstallPkgs: ['ember-prop-types'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -130,7 +132,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       const args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
       td.when(prompt(td.matchers.anything())).thenResolve({
         userInputInstallPkgs: ['package3', 'package4', 'ember-prop-types'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -154,7 +156,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       it('Group containing only new packages', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           userInputInstallPkgs: ['package3', 'package4'],
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -168,7 +170,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       it('Group containing packages already installed', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -185,7 +187,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       it('Group containing package to update and new package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           userInputInstallPkgs: ['package4'],
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -203,7 +205,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       it('Group containing package already installed and new package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           userInputInstallPkgs: ['package4'],
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -223,7 +225,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
           // Same test for LTS and non LTS because we need to mock this but those will be selected by default since we
           // are on an LTS and that we already have those packages in our package.json
           userInputInstallPkgs: ['package3', 'package4'],
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -245,7 +247,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
           // Same test for LTS and non LTS because we need to mock this but those will be selected by default since we
           // are on an LTS and that we already have those packages in our package.json
           userInputInstallPkgs: ['package4'],
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -265,7 +267,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     describe('Single packages', function () {
       it('Packages already installed', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          confirmInstallPkgs: 'y'
+          confirmSelection: 'y'
         })
 
         return emberNew()
@@ -279,7 +281,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
     })
 
     it('Groups and single packages all installed', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({ })
+      td.when(prompt(td.matchers.anything())).thenResolve({
+        confirmSelection: 'y'
+       })
 
       return emberNew()
         .then(() => modifyPackages([
@@ -298,7 +302,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         beforeEach(function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
             userInputInstallPkgs: ['ember-prop-types'],
-            confirmInstallPkgs: 'y'
+            confirmSelection: 'y'
           })
         })
 
@@ -328,7 +332,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         it('New packages', function () {
           td.when(prompt(td.matchers.anything())).thenResolve({
             userInputInstallPkgs: ['ember-prop-types'],
-            confirmInstallPkgs: 'y'
+            confirmSelection: 'y'
           })
 
           return emberNew()
@@ -343,7 +347,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
             // We need to mock this but those will be selected by default since we are on an LTS and
             // that we already have those packages in our package.json
             userInputInstallPkgs: ['ember-prop-types'],
-            confirmInstallPkgs: 'y'
+            confirmSelection: 'y'
           })
 
           return emberNew()
@@ -367,7 +371,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
     it('Already installed package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -383,7 +387,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory
         userInputInstallPkgs: ['my-package-m'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -400,7 +404,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory
         userInputInstallPkgs: ['my-package-m'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -419,7 +423,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
     it('Already installed package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -436,7 +440,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
         userInputInstallPkgs: ['my-package-m', 'my-package'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()
@@ -455,7 +459,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
         userInputInstallPkgs: ['my-package-m', 'my-package'],
-        confirmInstallPkgs: 'y'
+        confirmSelection: 'y'
       })
 
       return emberNew()

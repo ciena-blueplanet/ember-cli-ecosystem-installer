@@ -13,19 +13,19 @@ const objUtil = require('../../lib/utils/obj')
 const stateHandler = require('../../lib/models/state')
 const statesEnum = stateHandler.statesEnum
 
-let userInputInstall = {
+const QUESTION_INSTALL = {
   name: 'userInputInstallPkgs',
-  msg: 'Available packages (install)'
+  message: 'Available packages (install)'
 }
 
-let userInputUninstall = {
+const QUESTION_UNINSTALL = {
   name: 'userInputUninstallPkgs',
-  msg: 'Available packages (uninstall)'
+  message: 'Available packages (uninstall)'
 }
 
-const USER_INPUT_CONFIRM = {
+const QUESTION_CONFIRM = {
   name: 'confirmSelection',
-  msg: 'Would you like to confirm the following choices'
+  message: 'Would you like to confirm the following choices'
 }
 
 const MANDATORY_TO_STR = 'mandatory'
@@ -143,10 +143,10 @@ module.exports = {
    * @returns {Promise} a promise that will return all the packages to install
    */
   getSelectedPkgsToInstall (groups) {
-    userInputInstall.choices = userInputHandler.getChoices(groups, this.getChoiceForGroupInstall.bind(this))
     return this.getSelectedPkgs(
       groups,
-      userInputInstall,
+      QUESTION_INSTALL,
+      this.getChoiceForGroupInstall.bind(this),
       this.getActionForGroupForInstall)
   },
   /**
@@ -170,13 +170,14 @@ module.exports = {
    * Get the choices for a group.
    * @param {string} name the name of the group
    * @param {object} group a group
+   * @param {boolean} isSelectedByUser true is the user already selected that value
    * @returns {object} the choice for a group
    */
-  getChoiceForGroupInstall (name, group) {
+  getChoiceForGroupInstall (name, group, isSelectedByUser) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
-      checked: this.isSelectedByDefaultForInstall(group),
+      checked: isSelectedByUser || this.isSelectedByDefaultForInstall(group),
       disabled: this.isDisabledByDefaultForInstall(group)
     }
   },
@@ -246,10 +247,10 @@ module.exports = {
    * @returns {Promise} a promise that will return all the packages to uninstall
    */
   getSelectedPkgsToUninstall (groups) {
-    userInputUninstall.choices = userInputHandler.getChoices(groups, this.getChoiceForGroupUninstall)
     return this.getSelectedPkgs(
       groups,
-      userInputUninstall,
+      QUESTION_UNINSTALL,
+      this.getChoiceForGroupUninstall,
       this.getActionForGroupForUninstall)
   },
   /**
@@ -271,13 +272,14 @@ module.exports = {
    * Get the choices for a group.
    * @param {string} name the name of the group
    * @param {object} group a group
+   * @param {boolean} isSelectedByUser true is the user already selected that value
    * @returns {object} the choice for a group
    */
-  getChoiceForGroupUninstall (name, group) {
+  getChoiceForGroupUninstall (name, group, isSelectedByUser) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
-      checked: false,
+      checked: isSelectedByUser || false,
       disabled: false
     }
   },
@@ -286,27 +288,30 @@ module.exports = {
   /**
    * Get the selection of the user.
    * @param {object} groups all the groups the user can select
-   * @param {object} userInput the information of the user input (name, msg)
-   * @param {function} getActionForGroup the function call to get the actiond by group
+   * @param {object} question the question to ask to the user
+   * @param {function} getChoicesFct the function call to get the choices
+   * @param {function} getActionForGroupFct the function call to get the actiond by group
    * @returns {Promise} a promise that will return all the selected groups
    */
-  getSelectedPkgs (groups, userInput, getActionForGroup) {
-    const promise = this.getUserInputForGroups(groups, userInput.name, userInput.msg, userInput.choices)
+  getSelectedPkgs (groups, question, getChoicesFct, getActionForGroupFct) {
+    const choices = userInputHandler.getChoices(groups, getChoicesFct)
+    const promise = this.getUserInputForGroups(groups, question, choices)
     if (promise) {
       return promise.then((userInputs) => {
         // Once we get the input of the user, we display a summary and we ask
         // the user to confirm the action for each group.
         const actionByGroup = actionHandler.getByEntity(groups,
-                                        userInputs[userInput.name],
-                                        getActionForGroup)
+                                        userInputs[question.name],
+                                        getActionForGroupFct)
         console.log(this.getSummary(groups, actionByGroup))
         return this.getConfirmedPkgsSelected(
           groups,
-          userInput,
           actionByGroup,
           this.getPackagesToModify.bind(this),
-          this.getSelectedPkgs.bind(this),
-          getActionForGroup)
+          question,
+          getChoicesFct,
+          getActionForGroupFct,
+          this.getSelectedPkgs.bind(this))
       })
     }
   },
@@ -343,33 +348,35 @@ module.exports = {
   /**
    * Prompt the user to confirm the actions selected for each group.
    * @param {object} groups all the groups the user can select
-   * @param {object} userInput the information of the user input (name, msg)
    * @param {object} actionByGroup the action that will be done for each group
    * @param {function} getSelectedFct the function call to get the selected packages
+   * @param {object} question the question to ask to the user
+   * @param {function} getChoicesFct the function call to get the choices
+   * @param {function} getActionForGroupFct the function call to get the actiond by group
    * @param {function} goBackToSelectionFct the function call to get go back to the selection
-   * @param {function} getActionForGroup the function call to get the actiond by group
    * @returns {Promise} a promise that will return back the user to the selection or
    *          {object} a list of the packages selected
    */
-  getConfirmedPkgsSelected (groups, userInput, actionByGroup, getSelectedFct, goBackToSelectionFct, getActionForGroup) {
+  getConfirmedPkgsSelected (groups, actionByGroup, getSelectedFct, question, getChoicesFct, getActionForGroupFct,
+      goBackToSelectionFct) {
     if (this.isConfirmationRequired(actionByGroup)) {
-      return this.getConfirmationUserInput(USER_INPUT_CONFIRM.name, USER_INPUT_CONFIRM.msg).then((confirmUserInput) => {
-        if (confirmUserInput[USER_INPUT_CONFIRM.name]) {
+      return this.getConfirmationUserInput(QUESTION_CONFIRM).then((confirmUserInput) => {
+        if (confirmUserInput[QUESTION_CONFIRM.name]) {
           return getSelectedFct(groups, actionByGroup)
         } else {
-          return goBackToSelectionFct(groups, userInput, getActionForGroup)
+          return goBackToSelectionFct(groups, question, getChoicesFct, getActionForGroupFct)
         }
       })
     }
   },
   /**
    * Prompt the user for a confirmation.
-   * @param {string} inputName the name of the user input
-   * @param {string} inputMessage the message that will be prompt to the user
+   * @param {object} question the question to ask the user
    * @returns {Promise} the promise containing the user input
    */
-  getConfirmationUserInput (inputName, inputMessage) {
-    return userInputHandler.getUserInputForChoice(this, 'confirm', inputName, inputMessage, [])
+  getConfirmationUserInput (question) {
+    return userInputHandler.getUserInputForChoice(this,
+      {type: 'confirm', name: question.name, message: question.message}, [])
   },
   /**
    * Returns true if the confirmation is required for the actions to be done by groups and false otherwise.
@@ -390,14 +397,14 @@ module.exports = {
   /**
    * Prompt the user with a set of choices for the groups.
    * @param {object} groups an object containing all the groups
-   * @param {string} inputName the name of the user input
-   * @param {string} inputMessage the message that will be prompt to the user
+   * @param {object} question the question to ask the user
    * @param {array} choices the choices that will be shown to the user
    * @returns {Promise} the promise containing the user input
    */
-  getUserInputForGroups (groups, inputName, inputMessage, choices) {
+  getUserInputForGroups (groups, question, choices) {
     if (!_.isEmpty(choices)) {
-      return userInputHandler.getUserInputForChoice(this, 'checkbox', inputName, inputMessage, choices)
+      return userInputHandler.getUserInputForChoice(this,
+        {type: 'checkbox', name: question.name, message: question.message}, choices)
     }
   },
 

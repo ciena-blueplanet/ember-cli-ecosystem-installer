@@ -1,3 +1,15 @@
+# 0.4.0
+* Major refactoring (split logic in multiple files, renames, make more generic, etc.)
+* Support mandatory/optional groups and packages
+* Skip packages already installed
+* Install new packages
+* Automatically check packages that are installed with a different version if you are on an LTS
+* Add more tests to increase coverage and support more scenarios
+* Support uninstall of packages
+* Reselect choices selected by the user
+* Improve check to determine if a package is installed or not
+
+
 # 0.3.0
 * Add check if already installed
 * Add the auto overwrite

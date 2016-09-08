@@ -1,18 +1,36 @@
 {
+  "mandatory": {
+    "package1m": {},
+    "package2m": {
+      "packages": {}
+    },
+    "package3m": {
+      "packages": {
+        "ember-resolver": "^2.0.3"
+      }
+    },
+    "package4m": {
+      "packages": {
+        "ember-truth-helpers": "1.2.0",
+        "ember-welcome-page": "^1.0.1"
+      }
+    },
+    "loader.js": "^4.0.1"
+  },
   "package1": {},
   "package2": {
     "packages": {}
   },
   "package3": {
     "packages": {
-      "ember-hook": "1.3.1"
+      "lodash-es": "4.15.0"
     }
   },
   "package4": {
     "packages": {
-      "ember-frost-core": "0.25.3",
-      "ember-redux": "1.5.3"
+      "redux": "3.5.2",
+      "redux-thunk": "2.1.0"
     }
   },
-  "ember-d3": "0.2.0"
+  "svg4everybody": "2.1.0"
 }

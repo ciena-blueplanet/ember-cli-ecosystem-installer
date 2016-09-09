@@ -14,12 +14,12 @@ const stateHandler = require('../../lib/models/state')
 const statesEnum = stateHandler.statesEnum
 
 const QUESTION_RECOMMENDED_GROUPS = {
-  name: 'userInputInstallPkgs',
+  name: 'userInputRecommendGroups',
   message: 'Available packages (install)'
 }
 
 const QUESTION_OTHER_GROUPS = {
-  name: 'userInputUninstallPkgs',
+  name: 'userInputOtherGroups',
   message: 'Available packages (uninstall)'
 }
 
@@ -104,10 +104,9 @@ module.exports = {
    * @returns {Promise} a promise to uninstall packages
    */
   unistallPkgs (packages) {
-    const packagesToUninstall = packages[actionsEnum.REMOVE]
-    if (packagesToUninstall) {
-      // TODO packagesToUninstall
-      return this.removePackagesFromProject([])
+    if (packages && packages[actionsEnum.REMOVE]) {
+      const packagesToUninstall = packages[actionsEnum.REMOVE]
+      return this.removePackagesFromProject(packagesToUninstall)
     }
   },
   /**
@@ -116,9 +115,11 @@ module.exports = {
    * @returns {Promise} a promise to install packages
    */
   installPkgs (packages) {
-    const packagesToInstall = packages[actionsEnum.OVERWRITE]
-    if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
-      return this.addAddonsToProject({ packages: packagesToInstall })
+    if (packages) {
+      const packagesToInstall = packages[actionsEnum.OVERWRITE]
+      if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
+        return this.addAddonsToProject({ packages: packagesToInstall })
+      }
     }
   },
 
@@ -460,9 +461,4 @@ module.exports = {
     }
   }
 }
-
-// Tests
-// Uninstall nothing
-// Uninstall 1 pkg + confirm
-// Uninstall 1 pkg + confirm (no) + uninstall 2 pkgs + confirm (yes)
 

@@ -13,12 +13,12 @@ const objUtil = require('../../lib/utils/obj')
 const stateHandler = require('../../lib/models/state')
 const statesEnum = stateHandler.statesEnum
 
-const QUESTION_INSTALL = {
+const QUESTION_RECOMMENDED_GROUPS = {
   name: 'userInputInstallPkgs',
   message: 'Available packages (install)'
 }
 
-const QUESTION_UNINSTALL = {
+const QUESTION_OTHER_GROUPS = {
   name: 'userInputUninstallPkgs',
   message: 'Available packages (uninstall)'
 }
@@ -52,66 +52,85 @@ module.exports = {
    */
   afterInstall: function (options) {
     const existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
-    const groupsToInstall = this.getGroupsToInstall(options, existingPkgs)
-    const groupsToUninstall = this.getGroupsToUninstall(existingPkgs, groupsToInstall)
+    const recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
+    const otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
 
-    const installPromise = this.getSelectedPkgsToInstall(groupsToInstall)
+    const recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
 
-    if (installPromise) {
-      return installPromise.then((packagesToInstall) => {
-        const uninstallPromise = this.getSelectedPkgsToUninstall(groupsToUninstall)
-        if (uninstallPromise) {
-          return uninstallPromise.then((packagesToUninstall) => {
-            return this.uninstallAndInstallPkgs(packagesToUninstall, packagesToInstall)
+    if (recommendGroupsPromise) {
+      return recommendGroupsPromise.then((recommendedPackagesToModify) => {
+        const otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
+        if (otherGroupsPromise) {
+          return otherGroupsPromise.then((otherPackagesToModify) => {
+            const pkgsToModify = objUtil.merge(otherPackagesToModify, recommendedPackagesToModify)
+            return this.uninstallAndInstallPkgs(pkgsToModify)
           })
         } else {
-          return this.uninstallAndInstallPkgs([], packagesToInstall)
+          return this.uninstallAndInstallPkgs(recommendedPackagesToModify)
         }
       })
     } else {
-      const uninstallPromise = this.getSelectedPkgsToUninstall(groupsToUninstall)
-      if (uninstallPromise) {
-        return uninstallPromise.then((packagesToUninstall) => {
-          return this.uninstallAndInstallPkgs(packagesToUninstall, [])
+      const otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
+      if (otherGroupsPromise) {
+        return otherGroupsPromise.then((otherPackagesToModify) => {
+          return this.uninstallAndInstallPkgs(otherPackagesToModify)
         })
       }
     }
   },
   /**
    * Uninstall and install the packages passed in parameter.
-   * @param {object} packagesToUninstall the packages to uninstall
-   * @param {object} packagesToInstall the packages to install
+   * @param {object} packages the packages to install/uninstall
    * @returns {Promise} a promise to uninstall/install packages
    */
-  uninstallAndInstallPkgs (packagesToUninstall, packagesToInstall) {
-    console.log('Uninstall pkgs done', packagesToUninstall)
-    console.log('Install pkgs done', packagesToInstall)
+  uninstallAndInstallPkgs (packages) {
+    console.log('Packages to install and uninstall', packages)
 
     // Unistall the packages
-    let removePackagesPromise
-    if (packagesToUninstall && !_.isEmpty(packagesToUninstall)) {
-      removePackagesPromise = this.removePackagesFromProject(packagesToUninstall)
-    }
+    let removePackagesPromise = this.unistallPkgs(packages)
 
     // Install the packages
     if (removePackagesPromise) {
       return removePackagesPromise.then(() => {
-        return this.getAddonsToAddToProject(packagesToInstall)
+        return this.installPkgs(packages)
       })
     } else {
-      return this.getAddonsToAddToProject(packagesToInstall)
+      return this.installPkgs(packages)
+    }
+  },
+  /**
+   * Uninstall the packages passed in parameter.
+   * @param {object} packages the packages to install/uninstall
+   * @returns {Promise} a promise to uninstall packages
+   */
+  unistallPkgs (packages) {
+    const packagesToUninstall = packages[actionsEnum.REMOVE]
+    if (packagesToUninstall) {
+      // TODO packagesToUninstall
+      return this.removePackagesFromProject([])
+    }
+  },
+  /**
+   * Install the packages passed in parameter.
+   * @param {object} packages the packages to install/uninstall
+   * @returns {Promise} a promise to install packages
+   */
+  installPkgs (packages) {
+    const packagesToInstall = packages[actionsEnum.OVERWRITE]
+    if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
+      return this.addAddonsToProject({ packages: packagesToInstall })
     }
   },
 
-  // == Install ==========================================================
+  // == Recommended packages ==================================================
   /**
-   * Get all the groups to install (mandatory and optional).
+   * Get all the recommended groups (mandatory and optional).
    * Note: We are convertir all the single package to group to simplify their handling.
    * @param {object} options all the options
    * @param {object} existingPkgs the existing packages
    * @returns {object} contains all the groups.
    */
-  getGroupsToInstall (options, existingPkgs) {
+  getRecommendedGroups (options, existingPkgs) {
     const isThisAddonInstalled = externalAppPackagesUtil.isThisAddonInstalled(options)
 
     // Get the mandatory groups
@@ -125,29 +144,20 @@ module.exports = {
                         isThisAddonInstalled, false)
 
     // Get all the groups
-    return objUtil.merge([mandatoryGroups, optionalGroups])
+    return objUtil.merge(mandatoryGroups, optionalGroups)
   },
   /**
-   * Get the addons to add to the project.
-   * @param {object} packages the packages to install
-   * @returns {Promise} promise to add the addons to the project
+   * Get the recommended packages.
+   * @param {object} groups all recommended the groups
+   * @returns {Promise} a promise that will return all the selected recommended packages
    */
-  getAddonsToAddToProject (packages) {
-    if (packages && !_.isEmpty(packages)) {
-      return this.addAddonsToProject({ packages: packages })
-    }
-  },
-  /**
-   * Get the packages to install.
-   * @param {object} groups all the groups to install
-   * @returns {Promise} a promise that will return all the packages to install
-   */
-  getSelectedPkgsToInstall (groups) {
+  // TODO: note in pkg.json dependency node 5 + bcs of bind
+  getSelectedRecommendedPkgs (groups) {
     return this.getSelectedPkgs(
       groups,
-      QUESTION_INSTALL,
-      this.getChoiceForGroupOnInstall.bind(this),
-      this.getActionForGroupOnInstall)
+      QUESTION_RECOMMENDED_GROUPS,
+      this.getChoiceForGroup.bind(this),
+      this.getActionForRecommendedGroup)
   },
   /**
    * Get the action that will need to be done for a group.
@@ -156,16 +166,84 @@ module.exports = {
    * @param {boolean} isInUserInput true if the user selected that group and false otherwise
    * @returns {string} the action for this group
    */
-  getActionForGroupOnInstall (name, group, isInUserInput) {
+  getActionForRecommendedGroup (name, group, isInUserInput) {
+    let action = actionsEnum.SKIP
+
+    if (isInUserInput || group.isMandatory) {
+      action = actionsEnum.OVERWRITE
+    } else {
+      if (group.state === statesEnum.INSTALLED) {
+        action = actionsEnum.REMOVE
+      }
+    }
+
+    return action
+  },
+
+  // == Other packages ========================================================
+  /**
+   * Get all the other groups.
+   * Note: We are convertir all the single package to group to simplify their handling.
+   * @param {object} existingPkgs the existing packages
+   * @param {object} groupsToExclude all the groups that need to be excluded
+   * @returns {object} contains all the other groups
+   */
+  getOtherGroups (existingPkgs, groupsToExclude) {
+    const otherPackages = this.getOtherPkgs(existingPkgs, groupsToExclude)
+    return groupHandler.createGroups(otherPackages)
+  },
+  /**
+   * Get the other packages.
+   * @param {object} existingPkgs the existing packages
+   * @param {object} groupsToExclude the groups to exclude
+   * @returns {object} contains all the other packages
+   */
+  getOtherPkgs (existingPkgs, groupsToExclude) {
+    let otherPackages = {}
+    const packagesToExclude = groupHandler.getPackageNames(groupsToExclude)
+
+    for (let pkgName in existingPkgs) {
+      const pkg = existingPkgs[pkgName]
+      if (packagesToExclude.indexOf(pkgName) === -1) {
+        otherPackages[pkgName] = pkg
+      }
+    }
+    return otherPackages
+  },
+  /**
+   * Get the other packages.
+   * @param {object} groups all the other groups
+   * @returns {Promise} a promise that will return all the other selected packages
+   */
+  getSelectedOtherPkgs (groups) {
+    return this.getSelectedPkgs(
+      groups,
+      QUESTION_OTHER_GROUPS,
+      this.getChoiceForGroup.bind(this),
+      this.getActionForOtherGroup)
+  },
+  /**
+   * Get the action that will need to be done for a group.
+   * @param {string} name name of the group
+   * @param {object} group the group
+   * @param {boolean} isInUserInput true if the user selected that group and false otherwise
+   * @returns {string} the action for this group
+   */
+  getActionForOtherGroup (name, group, isInUserInput) {
     let action = actionsEnum.SKIP
 
     if (group.state === statesEnum.INSTALLED) {
-      action = actionsEnum.IDENTICAL
-    } else if (isInUserInput || group.isMandatory) {
-      action = actionsEnum.OVERWRITE
+      if (isInUserInput) {
+        action = actionsEnum.IDENTICAL
+      } else {
+        action = actionsEnum.REMOVE
+      }
     }
+
     return action
   },
+
+  // == Recommended and other packages ========================================
   /**
    * Get the choices for a group.
    * @param {string} name the name of the group
@@ -173,12 +251,12 @@ module.exports = {
    * @param {boolean} wasInUserInput true is the user previously selected that choice
    * @returns {object} the choice for a group
    */
-  getChoiceForGroupOnInstall (name, group, wasInUserInput) {
+  getChoiceForGroup (name, group, wasInUserInput) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
-      checked: wasInUserInput || this.isSelectedByDefaultOnInstall(group),
-      disabled: this.isDisabledByDefaultOnInstall(group)
+      checked: (wasInUserInput === undefined) ? this.isGroupSelectedByDefault(group) : wasInUserInput,
+      disabled: this.isGroupDisabledByDefault(group)
     }
   },
   /**
@@ -186,7 +264,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is selected by default and false otherwise
    */
-  isSelectedByDefaultOnInstall (group) {
+  isGroupSelectedByDefault (group) {
     return group.state === statesEnum.INSTALLED || group.isMandatory || this.isCandidateForAutomaticUpdate(group)
   },
   /**
@@ -202,86 +280,12 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is disabled by default and false otherwise
    */
-  isDisabledByDefaultOnInstall (group) {
-    if (group.state === statesEnum.INSTALLED) {
-      return group.state
-    } else if (group.isMandatory) {
+  isGroupDisabledByDefault (group) {
+    if (group.isMandatory) {
       return MANDATORY_TO_STR
-    } else {
-      return false
     }
-  },
 
-  // == Uninstall =============================================================
-  /**
-   * Get all the groups to uninstall.
-   * Note: We are convertir all the single package to group to simplify their handling.
-   * @param {object} existingPkgs the existing packages
-   * @param {object} groupsToInstall the groups to install
-   * @returns {object} contains all the groups to uninstall
-   */
-  getGroupsToUninstall (existingPkgs, groupsToInstall) {
-    const packagesToUninstall = this.getPkgsToUninstall(existingPkgs, groupsToInstall)
-    return groupHandler.createGroups(packagesToUninstall)
-  },
-  /**
-   * Get the packages to uninstall.
-   * @param {object} existingPkgs the existing packages
-   * @param {object} groupsToInstall the groups to install
-   * @returns {object} contains all the packages to uninstall
-   */
-  getPkgsToUninstall (existingPkgs, groupsToInstall) {
-    let packagesToUninstall = {}
-    const packagesToInstall = groupHandler.getPackages(groupsToInstall)
-    for (let pkgName in existingPkgs) {
-      const pkg = existingPkgs[pkgName]
-      if (!packagesToInstall[pkgName]) {
-        packagesToUninstall[pkgName] = pkg
-      }
-    }
-    return packagesToUninstall
-  },
-  /**
-   * Get the packages to uninstall.
-   * @param {object} groups all the groups to uninstall
-   * @returns {Promise} a promise that will return all the packages to uninstall
-   */
-  getSelectedPkgsToUninstall (groups) {
-    return this.getSelectedPkgs(
-      groups,
-      QUESTION_UNINSTALL,
-      this.getChoiceForGroupOnUninstall,
-      this.getActionForGroupOnUninstall)
-  },
-  /**
-   * Get the action that will need to be done for a group.
-   * @param {string} name name of the group
-   * @param {object} group the group
-   * @param {boolean} isInUserInput true if the user selected that group and false otherwise
-   * @returns {string} the action for this group
-   */
-  getActionForGroupOnUninstall (name, group, isInUserInput) {
-    let action = actionsEnum.SKIP
-
-    if (isInUserInput && group.state === statesEnum.INSTALLED) {
-      action = actionsEnum.REMOVE
-    }
-    return action
-  },
-  /**
-   * Get the choices for a group.
-   * @param {string} name the name of the group
-   * @param {object} group a group
-   * @param {boolean} wasInUserInput true is the user previously selected that choice
-   * @returns {object} the choice for a group
-   */
-  getChoiceForGroupOnUninstall (name, group, wasInUserInput) {
-    return {
-      value: name,
-      name: groupHandler.toString(name, group),
-      checked: wasInUserInput || false,
-      disabled: false
-    }
+    return false
   },
 
   // == User Input ============================================================
@@ -294,7 +298,7 @@ module.exports = {
    * @returns {object} all the choices
    */
   getChoices (groups, question, getChoicesFct, previousUserInputs) {
-    const choicesSelectedPreviously = (previousUserInputs !== undefined) ? previousUserInputs[question.name] : []
+    const choicesSelectedPreviously = (previousUserInputs === undefined) ? undefined : previousUserInputs[question.name]
     return userInputHandler.getChoices(groups, getChoicesFct, choicesSelectedPreviously)
   },
   /**
@@ -329,34 +333,44 @@ module.exports = {
     }
   },
   /**
-   * Get all the packages to install/uninstall based on the groups and the action for each group.
+   * Get the packages to modify  by action for all the groups.
    * @param {object} groups all the groups
    * @param {object} actionByGroup the action that will be done for each group
-   * @returns {array} a list of the packages to install
+   * @returns {object} a list of packages by action
    */
   getPackagesToModify (groups, actionByGroup) {
-    let packages = []
+    let packagesByAction = {}
     for (let groupName in groups) {
       const group = groups[groupName]
       const action = actionByGroup[groupName]
 
-      const pkgsToInstall = this.getPackagesToModifyByGroup(group, action)
-      if (pkgsToInstall) {
-        packages = packages.concat(pkgsToInstall)
+      const pkgsToModifyByAction = this.getPackagesToModifyByActionForGroup(group, action)
+      if (!_.isEmpty(pkgsToModifyByAction)) {
+        let currentPackagesByAction = packagesByAction[action]
+
+        if (!currentPackagesByAction) {
+          currentPackagesByAction = []
+        }
+
+        packagesByAction[action] = currentPackagesByAction.concat(pkgsToModifyByAction[action])
       }
     }
-    return packages
+
+    return packagesByAction
   },
   /**
-   * Get the packages to install/uninstall for a group.
+   * Get the packages to modify  by action for this group.
    * @param {object} group the group
    * @param {string} action the action to do on the group
-   * @returns {array} a list of packages
+   * @returns {object} a list of packages by action
    */
-  getPackagesToModifyByGroup (group, action) {
+  getPackagesToModifyByActionForGroup (group, action) {
+    let packagesToModifyByAction = {}
     if (action === actionsEnum.OVERWRITE || action === actionsEnum.REMOVE) {
-      return groupHandler.getPkgsBy(group, packageHandler.getPackageObj)
+      packagesToModifyByAction[action] = groupHandler.getPkgsBy(group, packageHandler.getPackageObj)
     }
+
+    return packagesToModifyByAction
   },
   /**
    * Prompt the user to confirm the actions selected for each group.
@@ -448,4 +462,7 @@ module.exports = {
 }
 
 // Tests
+// Uninstall nothing
+// Uninstall 1 pkg + confirm
+// Uninstall 1 pkg + confirm (no) + uninstall 2 pkgs + confirm (yes)
 

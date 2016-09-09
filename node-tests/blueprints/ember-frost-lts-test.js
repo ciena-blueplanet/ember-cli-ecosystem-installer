@@ -21,18 +21,6 @@ const requireFromCLI = require('ember-cli-blueprint-test-helpers/lib/helpers/req
 const Blueprint = requireFromCLI('lib/models/blueprint')
 const MockUI = requireFromCLI('tests/helpers/mock-ui')
 
-/**
- * Expected behavior
- * - New packages
- *    - Accept or reject any changes
- *    - Show the diff. to tell what's new
- * - Already have the packages
- *    - Not on LTS
- *        - Handle like new packages
- *    - Already on an LTS
- *        - Automatically update to the latest the packages you already have
- *        - Show the user the packages you updated
- */
 describe('Acceptance: ember generate ember-frost-lts', function () {
   setupTestHooks(this)
 

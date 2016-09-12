@@ -20,7 +20,6 @@ const td = require('testdouble')
 const requireFromCLI = require('ember-cli-blueprint-test-helpers/lib/helpers/require-from-cli')
 const Blueprint = requireFromCLI('lib/models/blueprint')
 const MockUI = requireFromCLI('tests/helpers/mock-ui')
-const MockNpm = require('../../lib/utils/npm')
 
 const otherPkgsToSelectByDefaylt = [
   'broccoli-asset-rev',

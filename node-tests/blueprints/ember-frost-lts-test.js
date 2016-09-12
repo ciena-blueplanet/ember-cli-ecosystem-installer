@@ -141,20 +141,6 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
           .to.contain('my-package@0.2.0'))
     })
 
-    it('User request only 1 package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['ember-prop-types'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(1)
-          .to.contain('ember-prop-types@~0.2.0'))
-    })
-
     it('User request everything', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         userInputRecommendGroups: ['package3', 'package4', 'ember-prop-types'],

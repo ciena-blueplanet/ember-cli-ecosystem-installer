@@ -1,5 +1,5 @@
 {
   "mandatory": {
-    "my-package-m": "0.2.0"
+    "ember-cli-chai": "0.0.10"
   }
 }

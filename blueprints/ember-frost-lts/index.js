@@ -12,6 +12,7 @@ const requestedPackagesUtil = require('../../lib/utils/requested-packages')
 const objUtil = require('../../lib/utils/obj')
 const stateHandler = require('../../lib/models/state')
 const statesEnum = stateHandler.statesEnum
+const npm = require('../../lib/utils/npm')
 
 const QUESTION_RECOMMENDED_GROUPS = {
   name: 'userInputRecommendGroups',
@@ -117,10 +118,67 @@ module.exports = {
   installPkgs (packages) {
     if (packages) {
       const packagesToInstall = packages[actionsEnum.OVERWRITE]
+      const packagesToInstallByName = this.getPackagesByName(packagesToInstall)
+
       if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
-        return this.addAddonsToProject({ packages: packagesToInstall })
+        const promises = this.getPkgsInfo(packagesToInstall)
+
+        return Promise.all(promises).then((results) => {
+          let addons = []
+          let nonAddons = []
+          results.forEach((result) => {
+            const pkg = packagesToInstallByName[result.name]
+            if (this.isAddon(result)) {
+              addons.push(pkg)
+            } else {
+              nonAddons.push(pkg)
+            }
+          })
+
+          const addAddonsPromise = this.addAddonsToProject({ packages: addons })
+          let addPkgsPromise
+          if (!_.isEmpty(nonAddons)) {
+            addPkgsPromise = this.addPackagesToProject(nonAddons)
+          }
+
+          return Promise.all([addAddonsPromise, addPkgsPromise])
+        })
       }
     }
+  },
+  /**
+   * Returns true if the package is an addon and false otherwise.
+   * @param {object} pkgInfo the information of the package
+   * @returns {boolean} true if the package is an addon and false otherwise
+   */
+  isAddon (pkgInfo) {
+    return pkgInfo.keywords.indexOf('ember-addon') > -1
+  },
+  /**
+   * Get the information for all the packages.
+   * @param {array} packages a list of package
+   * @returns {array} a list of promises to get the information of all the packages
+   */
+  getPkgsInfo (packages) {
+    let promises = []
+    packages.forEach((pkg) => {
+      promises.push(npm.view(packageHandler.toString(pkg.name, pkg)))
+    })
+    return promises
+  },
+  /**
+   * Get the packages by name.
+   * @param {array} packages a list of packages
+   * @returns {object} the packages in an object
+   */
+  getPackagesByName (packages) {
+    const packagesByName = {}
+    if (!_.isEmpty(packages)) {
+      packages.forEach((pkg) => {
+        packagesByName[pkg.name] = pkg
+      })
+    }
+    return packagesByName
   },
 
   // == Recommended packages ==================================================

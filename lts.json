@@ -23,7 +23,7 @@
   },
   "package3": {
     "packages": {
-      "lodash-es": "4.15.0"
+      "lodash": "4.15.0"
     }
   },
   "package4": {

@@ -20,6 +20,7 @@ const td = require('testdouble')
 const requireFromCLI = require('ember-cli-blueprint-test-helpers/lib/helpers/require-from-cli')
 const Blueprint = requireFromCLI('lib/models/blueprint')
 const MockUI = requireFromCLI('tests/helpers/mock-ui')
+const MockNpm = require('../../lib/utils/npm')
 
 const otherPkgsToSelectByDefaylt = [
   'broccoli-asset-rev',
@@ -103,7 +104,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       .then(() => emberGenerate(args))
       .then(() => expect(packagesToInstall)
         .to.have.lengthOf(1)
-        .to.contain('ember-prop-types@~0.2.0'))
+        .to.contain('ember-prop-types@~3.0.0'))
   })
 
   it('Single group', function () {
@@ -118,153 +119,19 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
       .then(() => emberGenerate(args))
       .then(() => expect(packagesToInstall)
         .to.have.lengthOf(1)
-        .to.contain('my-package@0.2.0'))
+        .to.contain('ember-cli-mocha@0.2.0'))
   })
 
-  describe('User request', function () {
+  describe('Package and group', function () {
     let args
     beforeEach(function () {
       args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
     })
 
-    it('User request only 1 group', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['package3'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(1)
-          .to.contain('my-package@0.2.0'))
-    })
-
-    it('User request everything', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['package3', 'package4', 'ember-prop-types'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(4)
-          .to.contain('my-package@0.2.0')
-          .to.contain('ember-prop-types@~0.2.0')
-          .to.contain('ember-frost-core@0.25.3')
-          .to.contain('ember-d3@0.2.0'))
-    })
-
-    it('User request install recommended package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['ember-prop-types'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(1)
-          .to.contain('ember-prop-types@~0.2.0'))
-    })
-
-    it('User request uninstall recommended package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'ember-prop-types', version: '~0.2.0', dev: true} // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.be.eql(null))
-        .then(() => expect(packagesToUninstall)
-          .to.have.lengthOf(1)
-          .to.contain('ember-prop-types'))
-    })
-
-    it('User request install + uninstall recommended package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['ember-prop-types'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'ember-d3', version: '0.2.0', dev: true},          // installed
-          {name: 'ember-frost-core', version: '0.25.3', dev: true}  // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(1)
-          .to.contain('ember-prop-types@~0.2.0'))
-        .then(() => expect(packagesToUninstall)
-          .to.have.lengthOf(2)
-          .to.contain('ember-d3')
-          .to.contain('ember-frost-core'))
-    })
-
-    it('User request uninstall other package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'my-package1', version: '0.2.0', dev: true}   // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.be.eql(null))
-        .then(() => expect(packagesToUninstall)
-          .to.have.lengthOf(1)
-          .to.contain('my-package1'))
-    })
-
-    it('User request install + uninstall recommended package and unistall other package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['ember-prop-types'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
-      })
-
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'ember-d3', version: '0.2.0', dev: true},            // installed
-          {name: 'ember-frost-core', version: '0.25.3', dev: true},   // installed
-          {name: 'my-package1', version: '0.2.0', dev: true}          // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(1)
-          .to.contain('ember-prop-types@~0.2.0'))
-        .then(() => expect(packagesToUninstall)
-          .to.have.lengthOf(3)
-          .to.contain('ember-d3')
-          .to.contain('ember-frost-core')
-          .to.contain('my-package1'))
-    })
-  })
-
-  describe('Recommended packages - Action based on selection', function () {
-    let args
-    beforeEach(function () {
-      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
-    })
-
-    describe('Selected', function () {
-      it('Group containing only new packages', function () {
+    describe('User request', function () {
+      it('User request only 1 group', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          userInputRecommendGroups: ['package3', 'package4'],
+          userInputRecommendGroups: ['package3'],
           userInputOtherGroups: otherPkgsToSelectByDefaylt,
           confirmSelection: 'y'
         })
@@ -272,58 +139,13 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         return emberNew()
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
+            .to.have.lengthOf(1)
+            .to.contain('ember-cli-mocha@0.2.0'))
       })
 
-      it('Group containing only packages to update', function () {
+      it('User request everything', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
-          userInputRecommendGroups: ['package3', 'package4'],
-          userInputOtherGroups: otherPkgsToSelectByDefaylt,
-          confirmSelection: 'y'
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.1.0', dev: true},        // to update
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packagesToInstall)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-
-      it('Group containing packages already installed', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          userInputRecommendGroups: ['package3', 'package4'],
-          userInputOtherGroups: otherPkgsToSelectByDefaylt,
-          confirmSelection: 'y'
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packagesToInstall)
-            .to.have.lengthOf(3)
-            .to.contain('my-package@0.2.0')
-            .to.contain('ember-d3@0.2.0')
-            .to.contain('ember-frost-core@0.25.3'))
-      })
-    })
-
-    describe('Not selected', function () {
-      it('Group containing only new packages', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['package3', 'package4', 'ember-prop-types'],
           userInputOtherGroups: otherPkgsToSelectByDefaylt,
           confirmSelection: 'y'
         })
@@ -331,10 +153,28 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         return emberNew()
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
-            .to.be.eql(null))
+            .to.have.lengthOf(4)
+            .to.contain('ember-cli-mocha@0.2.0')
+            .to.contain('ember-prop-types@~3.0.0')
+            .to.contain('ember-frost-core@0.25.3')
+            .to.contain('ember-d3@0.2.0'))
       })
 
-      it('Group containing only packages to update', function () {
+      it('User request install recommended package', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['ember-prop-types'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(1)
+            .to.contain('ember-prop-types@~3.0.0'))
+      })
+
+      it('User request uninstall recommended package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           userInputOtherGroups: otherPkgsToSelectByDefaylt,
           confirmSelection: 'y'
@@ -342,67 +182,39 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'my-package', version: '0.1.0', dev: true},        // to update
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packagesToInstall)
-            .to.be.eql(null))
-      })
-
-      it('Group containing packages already installed', function () {
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          userInputOtherGroups: otherPkgsToSelectByDefaylt,
-          confirmSelection: 'y'
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            {name: 'ember-prop-types', version: '~3.0.0', dev: true} // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
             .to.be.eql(null))
           .then(() => expect(packagesToUninstall)
-            .to.have.lengthOf(3)
-            .to.contain('my-package')
+            .to.have.lengthOf(1)
+            .to.contain('ember-prop-types'))
+      })
+
+      it('User request install + uninstall recommended package', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['ember-prop-types'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'ember-d3', version: '0.2.0', dev: true},          // installed
+            {name: 'ember-frost-core', version: '0.25.3', dev: true}  // installed
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(1)
+            .to.contain('ember-prop-types@~3.0.0'))
+          .then(() => expect(packagesToUninstall)
+            .to.have.lengthOf(2)
             .to.contain('ember-d3')
             .to.contain('ember-frost-core'))
       })
-    })
-  })
 
-  describe('Other packages - Action based on selection', function () {
-    let args
-    beforeEach(function () {
-      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
-    })
-
-    describe('Selected', function () {
-      it('Group containing packages already installed', function () {
-        console.log('before', otherPkgsToSelectByDefaylt)
-        const otherPkgsSelected = otherPkgsToSelectByDefaylt.concat(['my-package2'])
-        console.log('after', otherPkgsSelected)
-        td.when(prompt(td.matchers.anything())).thenResolve({
-          userInputOtherGroups: otherPkgsSelected,
-          confirmSelection: 'y'
-        })
-
-        return emberNew()
-          .then(() => modifyPackages([
-            {name: 'my-package2', version: '0.2.0', dev: true}        // installed
-          ]))
-          .then(() => emberGenerate(args))
-          .then(() => expect(packagesToUninstall)
-            .to.be.eql(null))
-      })
-    })
-
-    describe('Not selected', function () {
-      it('Group containing packages already installed', function () {
+      it('User request uninstall other package', function () {
         td.when(prompt(td.matchers.anything())).thenResolve({
           userInputOtherGroups: otherPkgsToSelectByDefaylt,
           confirmSelection: 'y'
@@ -410,81 +222,257 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'my-package', version: '0.2.0', dev: true}        // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}   // installed
           ]))
           .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.be.eql(null))
           .then(() => expect(packagesToUninstall)
             .to.have.lengthOf(1)
-            .to.contain('my-package'))
-      })
-    })
-  })
-
-  describe('Group with mixed package states', function () {
-    let args
-    beforeEach(function () {
-      args = ['ember-frost-lts', '--lts-file=node-tests/mock/package-group-lts.json']
-    })
-
-    it('Group containing package to update and new package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['package3', 'package4'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
+            .to.contain('ember-cli-mocha'))
       })
 
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'my-package', version: '0.2.0', dev: true},        // installed
-          {name: 'ember-frost-core', version: '0.25.2', dev: true}  // to update
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(3)
-          .to.contain('my-package@0.2.0')
-          .to.contain('ember-d3@0.2.0')
-          .to.contain('ember-frost-core@0.25.3'))
+      it('User request install + uninstall recommended package and unistall other package', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['ember-prop-types'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'ember-d3', version: '0.2.0', dev: true},            // installed
+            {name: 'ember-frost-core', version: '0.25.3', dev: true},   // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}     // installed
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(1)
+            .to.contain('ember-prop-types@~3.0.0'))
+          .then(() => expect(packagesToUninstall)
+            .to.have.lengthOf(3)
+            .to.contain('ember-d3')
+            .to.contain('ember-frost-core')
+            .to.contain('ember-cli-mocha'))
+      })
     })
 
-    it('Group containing package already installed and new package', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['package3', 'package4'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
+    describe('Recommended packages - Action based on selection', function () {
+      describe('Selected', function () {
+        it('Group containing only new packages', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputRecommendGroups: ['package3', 'package4'],
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.have.lengthOf(3)
+              .to.contain('ember-cli-mocha@0.2.0')
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
+        })
+
+        it('Group containing only packages to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputRecommendGroups: ['package3', 'package4'],
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},        // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.have.lengthOf(3)
+              .to.contain('ember-cli-mocha@0.2.0')
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
+        })
+
+        it('Group containing packages already installed', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputRecommendGroups: ['package3', 'package4'],
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
+              {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
+              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.have.lengthOf(3)
+              .to.contain('ember-cli-mocha@0.2.0')
+              .to.contain('ember-d3@0.2.0')
+              .to.contain('ember-frost-core@0.25.3'))
+        })
       })
 
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'my-package', version: '0.2.0', dev: true},        // installed
-          {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(3)
-          .to.contain('my-package@0.2.0')
-          .to.contain('ember-d3@0.2.0')
-          .to.contain('ember-frost-core@0.25.3'))
+      describe('Not selected', function () {
+        it('Group containing only new packages', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.be.eql(null))
+        })
+
+        it('Group containing only packages to update', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},        // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.be.eql(null))
+        })
+
+        it('Group containing packages already installed', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
+              {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
+              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToInstall)
+              .to.be.eql(null))
+            .then(() => expect(packagesToUninstall)
+              .to.have.lengthOf(3)
+              .to.contain('ember-cli-mocha')
+              .to.contain('ember-d3')
+              .to.contain('ember-frost-core'))
+        })
+      })
     })
 
-    it('Group containing package already installed and package to update', function () {
-      td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['package3', 'package4'],
-        userInputOtherGroups: otherPkgsToSelectByDefaylt,
-        confirmSelection: 'y'
+    describe('Other packages - Action based on selection', function () {
+      describe('Selected', function () {
+        it('Group containing packages already installed', function () {
+          console.log('before', otherPkgsToSelectByDefaylt)
+          const otherPkgsSelected = otherPkgsToSelectByDefaylt.concat(['ember-cli-mocha2'])
+          console.log('after', otherPkgsSelected)
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputOtherGroups: otherPkgsSelected,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha2', version: '0.2.0', dev: true}        // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToUninstall)
+              .to.be.eql(null))
+        })
       })
 
-      return emberNew()
-        .then(() => modifyPackages([
-          {name: 'my-package', version: '0.2.0', dev: true},        // installed
-          {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-          {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
-        ]))
-        .then(() => emberGenerate(args))
-        .then(() => expect(packagesToInstall)
-          .to.have.lengthOf(3)
-          .to.contain('my-package@0.2.0')
-          .to.contain('ember-d3@0.2.0')
-          .to.contain('ember-frost-core@0.25.3'))
+      describe('Not selected', function () {
+        it('Group containing packages already installed', function () {
+          td.when(prompt(td.matchers.anything())).thenResolve({
+            userInputOtherGroups: otherPkgsToSelectByDefaylt,
+            confirmSelection: 'y'
+          })
+
+          return emberNew()
+            .then(() => modifyPackages([
+              {name: 'ember-cli-mocha', version: '0.2.0', dev: true}        // installed
+            ]))
+            .then(() => emberGenerate(args))
+            .then(() => expect(packagesToUninstall)
+              .to.have.lengthOf(1)
+              .to.contain('ember-cli-mocha'))
+        })
+      })
+    })
+
+    describe('Group with mixed package states', function () {
+      it('Group containing package to update and new package', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['package3', 'package4'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}  // to update
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(3)
+            .to.contain('ember-cli-mocha@0.2.0')
+            .to.contain('ember-d3@0.2.0')
+            .to.contain('ember-frost-core@0.25.3'))
+      })
+
+      it('Group containing package already installed and new package', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['package3', 'package4'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
+            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(3)
+            .to.contain('ember-cli-mocha@0.2.0')
+            .to.contain('ember-d3@0.2.0')
+            .to.contain('ember-frost-core@0.25.3'))
+      })
+
+      it('Group containing package already installed and package to update', function () {
+        td.when(prompt(td.matchers.anything())).thenResolve({
+          userInputRecommendGroups: ['package3', 'package4'],
+          userInputOtherGroups: otherPkgsToSelectByDefaylt,
+          confirmSelection: 'y'
+        })
+
+        return emberNew()
+          .then(() => modifyPackages([
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
+            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+          ]))
+          .then(() => emberGenerate(args))
+          .then(() => expect(packagesToInstall)
+            .to.have.lengthOf(3)
+            .to.contain('ember-cli-mocha@0.2.0')
+            .to.contain('ember-d3@0.2.0')
+            .to.contain('ember-frost-core@0.25.3'))
+      })
     })
   })
 
@@ -496,43 +484,43 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
     it('Already installed package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['my-package-m'],
+        userInputRecommendGroups: ['ember-cli-chai'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'my-package-m', version: '0.2.0', dev: true}       // installed
+          {name: 'ember-cli-chai', version: '0.0.10', dev: true}       // installed
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(1)
-          .to.contain('my-package-m@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10'))
     })
 
     it('Package require update', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory
-        userInputRecommendGroups: ['my-package-m'],
+        userInputRecommendGroups: ['ember-cli-chai'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'my-package-m', version: '0.1.0', dev: true}       // to update
+          {name: 'ember-cli-chai', version: '0.1.0', dev: true}       // to update
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(1)
-          .to.contain('my-package-m@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10'))
     })
 
     it('New package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
         // We need to mock this but those will be selected by default since this package is mandatory
-        userInputRecommendGroups: ['my-package-m'],
+        userInputRecommendGroups: ['ember-cli-chai'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
@@ -541,7 +529,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(1)
-          .to.contain('my-package-m@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10'))
     })
   })
 
@@ -553,47 +541,47 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
     it('Already installed package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        userInputRecommendGroups: ['my-package-m', 'my-package'],
+        userInputRecommendGroups: ['ember-cli-chai', 'ember-cli-mocha'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'my-package-m', version: '0.2.0', dev: true},      // installed
-          {name: 'my-package', version: '0.2.0', dev: true}         // installed
+          {name: 'ember-cli-chai', version: '0.0.10', dev: true},      // installed
+          {name: 'ember-cli-mocha', version: '0.2.0', dev: true}         // installed
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(2)
-          .to.contain('my-package-m@0.2.0')
-          .to.contain('my-package@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10')
+          .to.contain('ember-cli-mocha@0.2.0'))
     })
 
     it('Package require update', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
-        userInputRecommendGroups: ['my-package-m', 'my-package'],
+        // We need to mock this but those will be selected by default since this package is mandatory (ember-cli-chai)
+        userInputRecommendGroups: ['ember-cli-chai', 'ember-cli-mocha'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'my-package-m', version: '0.1.0', dev: true},      // to update
-          {name: 'my-package', version: '0.1.0', dev: true}         // to update
+          {name: 'ember-cli-chai', version: '0.0.9', dev: true},      // to update
+          {name: 'ember-cli-mocha', version: '0.1.0', dev: true}         // to update
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(2)
-          .to.contain('my-package-m@0.2.0')
-          .to.contain('my-package@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10')
+          .to.contain('ember-cli-mocha@0.2.0'))
     })
 
     it('New package', function () {
       td.when(prompt(td.matchers.anything())).thenResolve({
-        // We need to mock this but those will be selected by default since this package is mandatory (my-package-m)
-        userInputRecommendGroups: ['my-package-m', 'my-package'],
+        // We need to mock this but those will be selected by default since this package is mandatory (ember-cli-chai)
+        userInputRecommendGroups: ['ember-cli-chai', 'ember-cli-mocha'],
         userInputOtherGroups: otherPkgsToSelectByDefaylt,
         confirmSelection: 'y'
       })
@@ -602,8 +590,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
           .to.have.lengthOf(2)
-          .to.contain('my-package-m@0.2.0')
-          .to.contain('my-package@0.2.0'))
+          .to.contain('ember-cli-chai@0.0.10')
+          .to.contain('ember-cli-mocha@0.2.0'))
     })
   })
 })

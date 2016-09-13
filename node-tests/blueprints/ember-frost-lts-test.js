@@ -181,7 +181,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'ember-prop-types', version: '~3.0.0', dev: true} // installed
+            {name: 'ember-prop-types', version: '~3.0.0', dev: true}  // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -221,7 +221,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}   // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}      // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -242,7 +242,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
           .then(() => modifyPackages([
             {name: 'ember-d3', version: '0.2.0', dev: true},            // installed
             {name: 'ember-frost-core', version: '0.25.3', dev: true},   // installed
-            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}     // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true}      // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -283,9 +283,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(() => modifyPackages([
-              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},        // to update
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},         // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true},       // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}                 // to update
             ]))
             .then(() => emberGenerate(args))
             .then(() => expect(packagesToInstall)
@@ -304,9 +304,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(() => modifyPackages([
-              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
-              {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
-              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
+              {name: 'ember-frost-core', version: '0.25.3', dev: true},       // installed
+              {name: 'ember-d3', version: '0.2.0', dev: true}                 // installed
             ]))
             .then(() => emberGenerate(args))
             .then(() => expect(packagesToInstall)
@@ -338,9 +338,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(() => modifyPackages([
-              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},        // to update
-              {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-              {name: 'ember-d3', version: '0.1.0', dev: true}           // to update
+              {name: 'ember-cli-mocha', version: '0.1.0', dev: true},         // to update
+              {name: 'ember-frost-core', version: '0.25.2', dev: true},       // to update
+              {name: 'ember-d3', version: '0.1.0', dev: true}                 // to update
             ]))
             .then(() => emberGenerate(args))
             .then(() => expect(packagesToInstall)
@@ -355,9 +355,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(() => modifyPackages([
-              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
-              {name: 'ember-frost-core', version: '0.25.3', dev: true}, // installed
-              {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+              {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
+              {name: 'ember-frost-core', version: '0.25.3', dev: true},       // installed
+              {name: 'ember-d3', version: '0.2.0', dev: true}                 // installed
             ]))
             .then(() => emberGenerate(args))
             .then(() => expect(packagesToInstall)
@@ -421,8 +421,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}  // to update
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
+            {name: 'ember-frost-core', version: '0.25.2', dev: true}        // to update
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -441,8 +441,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},       // installed
+            {name: 'ember-d3', version: '0.2.0', dev: true}               // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -461,9 +461,9 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(() => modifyPackages([
-            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},        // installed
-            {name: 'ember-frost-core', version: '0.25.2', dev: true}, // to update
-            {name: 'ember-d3', version: '0.2.0', dev: true}           // installed
+            {name: 'ember-cli-mocha', version: '0.2.0', dev: true},       // installed
+            {name: 'ember-frost-core', version: '0.25.2', dev: true},     // to update
+            {name: 'ember-d3', version: '0.2.0', dev: true}               // installed
           ]))
           .then(() => emberGenerate(args))
           .then(() => expect(packagesToInstall)
@@ -547,8 +547,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'ember-cli-chai', version: '0.0.10', dev: true},      // installed
-          {name: 'ember-cli-mocha', version: '0.2.0', dev: true}         // installed
+          {name: 'ember-cli-chai', version: '0.0.10', dev: true},         // installed
+          {name: 'ember-cli-mocha', version: '0.2.0', dev: true}          // installed
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)
@@ -567,8 +567,8 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
       return emberNew()
         .then(() => modifyPackages([
-          {name: 'ember-cli-chai', version: '0.0.9', dev: true},      // to update
-          {name: 'ember-cli-mocha', version: '0.1.0', dev: true}         // to update
+          {name: 'ember-cli-chai', version: '0.0.9', dev: true},          // to update
+          {name: 'ember-cli-mocha', version: '0.1.0', dev: true}          // to update
         ]))
         .then(() => emberGenerate(args))
         .then(() => expect(packagesToInstall)

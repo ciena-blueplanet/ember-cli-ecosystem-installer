@@ -24,6 +24,8 @@ const MESSAGES = {
   CONFIRMATION: 'Would you like to confirm the following choices',
   SUMMARY: 'Summary of the operations that will be done',
   UNINSTALLING_PKGS: 'Uninstalling packages',
+  CHECKING_PACKAGES: 'Checking packages content',
+  CHECKED_PACKAGES: 'Checked packages content',
   INSTALLING_PKGS: 'Installing packages'
 }
 
@@ -58,13 +60,6 @@ module.exports = {
     // not specified (since that doesn't actually matter
     // to us
   },
-  // wait (ms){
-  //   var start = new Date().getTime();
-  //   var end = start;
-  //   while(end < start + ms) {
-  //     end = new Date().getTime();
-  //   }
-  // },
   /**
    * Query the user to determine which packages/groups he wants to install.
    * Note: Some packages/groups are mandatory and the others are optional
@@ -72,6 +67,7 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
+    this.displayWelcomeTag()
     display.title(MESSAGES.INSTALLING_LTS)
     display.title(MESSAGES.LOADING_VALIDATING_LTS_FILES)
     const existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
@@ -101,6 +97,17 @@ module.exports = {
         })
       }
     }
+  },
+  /**
+   * Display welcome tag
+   */
+  displayWelcomeTag () {
+    console.log('.____  ____________________  ')
+    console.log('|    | \\__    ___/   _____/ ')
+    console.log('|    |   |    |  \\_____  \\ ')
+    console.log('|    |___|    |  /        \\ ')
+    console.log('|________\\____| /_________/ ')
+    console.log('Tool to install/uninstall LTS packages\n')
   },
   /**
    * Uninstall and install the packages passed in parameter.
@@ -145,9 +152,15 @@ module.exports = {
       const packagesToInstallByName = this.getPackagesByName(packagesToInstall)
 
       if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
+        let spinner = display.getSpinner(MESSAGES.CHECKING_PACKAGES)
+        spinner.start()
+
         const promises = this.getPkgsInfo(packagesToInstall)
 
         return Promise.all(promises).then((results) => {
+          spinner.stop(true)
+          display.message(MESSAGES.CHECKED_PACKAGES)
+
           let addons = []
           let nonAddons = []
           results.forEach((result) => {

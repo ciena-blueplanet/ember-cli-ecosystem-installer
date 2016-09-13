@@ -13,20 +13,33 @@ const objUtil = require('../../lib/utils/obj')
 const stateHandler = require('../../lib/models/state')
 const statesEnum = stateHandler.statesEnum
 const npm = require('../../lib/utils/npm')
+const display = require('../../lib/ui/display')
+
+const MESSAGES = {
+  QUESTION_RECOMMENDED_GROUPS: 'Choose the LTS features to install/uninstall',
+  QUESTION_OTHER_GROUPS: 'Choose the non LTS packages to keep/uninstall',
+  INSTALLING_LTS: 'Installing LTS',
+  LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
+  LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',
+  CONFIRMATION: 'Would you like to confirm the following choices',
+  SUMMARY: 'Summary of the operations that will be done',
+  UNINSTALLING_PKGS: 'Uninstalling packages',
+  INSTALLING_PKGS: 'Installing packages'
+}
 
 const QUESTION_RECOMMENDED_GROUPS = {
   name: 'userInputRecommendGroups',
-  message: 'Available packages (install)'
+  message: MESSAGES.QUESTION_RECOMMENDED_GROUPS
 }
 
 const QUESTION_OTHER_GROUPS = {
   name: 'userInputOtherGroups',
-  message: 'Available packages (uninstall)'
+  message: MESSAGES.QUESTION_OTHER_GROUPS
 }
 
 const QUESTION_CONFIRM = {
   name: 'confirmSelection',
-  message: 'Would you like to confirm the following choices'
+  message: MESSAGES.CONFIRMATION
 }
 
 const MANDATORY_TO_STR = 'mandatory'
@@ -45,6 +58,13 @@ module.exports = {
     // not specified (since that doesn't actually matter
     // to us
   },
+  // wait (ms){
+  //   var start = new Date().getTime();
+  //   var end = start;
+  //   while(end < start + ms) {
+  //     end = new Date().getTime();
+  //   }
+  // },
   /**
    * Query the user to determine which packages/groups he wants to install.
    * Note: Some packages/groups are mandatory and the others are optional
@@ -52,9 +72,12 @@ module.exports = {
    * @returns {object} a list of the packages to install
    */
   afterInstall: function (options) {
+    display.title(MESSAGES.INSTALLING_LTS)
+    display.title(MESSAGES.LOADING_VALIDATING_LTS_FILES)
     const existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
     const recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
     const otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
+    display.title(MESSAGES.LOADED_VALIDATED_LTS_FILES)
 
     const recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
 
@@ -85,8 +108,7 @@ module.exports = {
    * @returns {Promise} a promise to uninstall/install packages
    */
   uninstallAndInstallPkgs (packages) {
-    console.log('Packages to install and uninstall', packages)
-
+    display.carriageReturn()
     // Unistall the packages
     let removePackagesPromise = this.unistallPkgs(packages)
 
@@ -106,6 +128,7 @@ module.exports = {
    */
   unistallPkgs (packages) {
     if (packages && packages[actionsEnum.REMOVE]) {
+      display.title(MESSAGES.UNINSTALLING_PKGS)
       const packagesToUninstall = packages[actionsEnum.REMOVE]
       return this.removePackagesFromProject(packagesToUninstall)
     }
@@ -117,6 +140,7 @@ module.exports = {
    */
   installPkgs (packages) {
     if (packages) {
+      display.title(MESSAGES.INSTALLING_PKGS)
       const packagesToInstall = packages[actionsEnum.OVERWRITE]
       const packagesToInstallByName = this.getPackagesByName(packagesToInstall)
 
@@ -380,7 +404,7 @@ module.exports = {
                                         userInputs[question.name],
                                         getActionByGroupFct)
         // Display summary
-        console.log(this.getSummary(groups, actionByGroup))
+        this.displaySummary(groups, actionByGroup)
         // Confirm choices
         return this.getConfirmedPkgsSelected(
           actionByGroup,
@@ -443,6 +467,7 @@ module.exports = {
     if (this.isConfirmationRequired(actionByGroup)) {
       return this.getConfirmationUserInput(QUESTION_CONFIRM).then((confirmUserInput) => {
         if (confirmUserInput[QUESTION_CONFIRM.name]) {
+          display.carriageReturn()
           const params = getSelected.params
           return getSelected.fct(params.groups, params.actionByGroup)
         } else {
@@ -494,17 +519,15 @@ module.exports = {
 
   // == Summary ===============================================================
   /**
-   * Get the summary for all the groups.
+   * Display the summary for all the groups.
    * @param {object} groups all the groups
    * @param {object} actionByGroup the action that will be done for each group
-   * @returns {string} a summary for all the groups
    */
-  getSummary (groups, actionByGroup) {
-    let summary = 'Summary\n'
+  displaySummary (groups, actionByGroup) {
+    display.title(MESSAGES.SUMMARY)
     for (let groupName in groups) {
-      summary += `${this.getSummaryByGroup(groupName, groups[groupName], actionByGroup[groupName])}\n`
+      display.message(this.getSummaryByGroup(groupName, groups[groupName], actionByGroup[groupName]))
     }
-    return summary
   },
   /**
    * Get the summary for a group.
@@ -515,7 +538,7 @@ module.exports = {
    */
   getSummaryByGroup (name, group, action) {
     if (name && group && action) {
-      return `   ${actionHandler.toString(action)} ${groupHandler.toString(name, group)}`
+      return `${actionHandler.toString(action)} ${groupHandler.toString(name, group)}`
     }
   }
 }

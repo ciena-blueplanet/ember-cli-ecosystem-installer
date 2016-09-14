@@ -1,6 +1,7 @@
 'use strict'
 
 const _ = require('lodash')
+const figures = require('figures')
 
 const actionHandler = require('../../lib/models/action')
 const actionsEnum = actionHandler.actionsEnum
@@ -16,8 +17,10 @@ const npm = require('../../lib/utils/npm')
 const display = require('../../lib/ui/display')
 
 const MESSAGES = {
-  QUESTION_RECOMMENDED_GROUPS: 'Choose the LTS features to install/uninstall',
-  QUESTION_OTHER_GROUPS: 'Choose the non LTS packages to keep/uninstall',
+  QUESTION_RECOMMENDED_GROUPS:
+    `Choose the LTS features to install [${figures.radioOn} ] or uninstall [${figures.radioOff} ]`,
+  QUESTION_OTHER_GROUPS:
+    `Choose the non LTS packages to keep$ [${figures.radioOn} ] or uninstall [${figures.radioOff} ]`,
   INSTALLING_LTS: 'Installing LTS',
   LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
   LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',

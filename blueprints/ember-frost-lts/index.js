@@ -18,9 +18,9 @@ const display = require('../../lib/ui/display')
 
 const MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
-    `Choose the LTS features to install [${figures.radioOn} ] or uninstall [${figures.radioOff} ]`,
+    'Choose the LTS features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   QUESTION_OTHER_GROUPS:
-    `Choose the non LTS packages to keep$ [${figures.radioOn} ] or uninstall [${figures.radioOff} ]`,
+    'Choose the non LTS packages to keep$ [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   INSTALLING_LTS: 'Installing LTS',
   LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
   LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',
@@ -81,22 +81,24 @@ module.exports = {
     const recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
 
     if (recommendGroupsPromise) {
-      return recommendGroupsPromise.then((recommendedPackagesToModify) => {
-        const otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
+      const self = this
+      return recommendGroupsPromise.then(function (recommendedPackagesToModify) {
+        const otherGroupsPromise = self.getSelectedOtherPkgs(otherGroups)
         if (otherGroupsPromise) {
-          return otherGroupsPromise.then((otherPackagesToModify) => {
+          return otherGroupsPromise.then(function (otherPackagesToModify) {
             const pkgsToModify = objUtil.merge(otherPackagesToModify, recommendedPackagesToModify)
-            return this.uninstallAndInstallPkgs(pkgsToModify)
+            return self.uninstallAndInstallPkgs(pkgsToModify)
           })
         } else {
-          return this.uninstallAndInstallPkgs(recommendedPackagesToModify)
+          return self.uninstallAndInstallPkgs(recommendedPackagesToModify)
         }
       })
     } else {
       const otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
       if (otherGroupsPromise) {
-        return otherGroupsPromise.then((otherPackagesToModify) => {
-          return this.uninstallAndInstallPkgs(otherPackagesToModify)
+        const self = this
+        return otherGroupsPromise.then(function (otherPackagesToModify) {
+          return self.uninstallAndInstallPkgs(otherPackagesToModify)
         })
       }
     }
@@ -124,8 +126,9 @@ module.exports = {
 
     // Install the packages
     if (removePackagesPromise) {
-      return removePackagesPromise.then(() => {
-        return this.installPkgs(packages)
+      const self = this
+      return removePackagesPromise.then(function () {
+        return self.installPkgs(packages)
       })
     } else {
       return this.installPkgs(packages)
@@ -160,25 +163,26 @@ module.exports = {
 
         const promises = this.getPkgsInfo(packagesToInstall)
 
-        return Promise.all(promises).then((results) => {
+        const self = this
+        return Promise.all(promises).then(function (results) {
           spinner.stop(true)
           display.message(MESSAGES.CHECKED_PACKAGES)
 
           let addons = []
           let nonAddons = []
-          results.forEach((result) => {
+          results.forEach(function (result) {
             const pkg = packagesToInstallByName[result.name]
-            if (this.isAddon(result)) {
+            if (self.isAddon(result)) {
               addons.push(pkg)
             } else {
               nonAddons.push(pkg)
             }
           })
 
-          const addAddonsPromise = this.addAddonsToProject({ packages: addons })
+          const addAddonsPromise = self.addAddonsToProject({ packages: addons })
           let addPkgsPromise
           if (!_.isEmpty(nonAddons)) {
-            addPkgsPromise = this.addPackagesToProject(nonAddons)
+            addPkgsPromise = self.addPackagesToProject(nonAddons)
           }
 
           return Promise.all([addAddonsPromise, addPkgsPromise])
@@ -201,7 +205,7 @@ module.exports = {
    */
   getPkgsInfo (packages) {
     let promises = []
-    packages.forEach((pkg) => {
+    packages.forEach(function (pkg) {
       promises.push(npm.view(packageHandler.toString(pkg.name, pkg)))
     })
     return promises
@@ -214,7 +218,7 @@ module.exports = {
   getPackagesByName (packages) {
     const packagesByName = {}
     if (!_.isEmpty(packages)) {
-      packages.forEach((pkg) => {
+      packages.forEach(function (pkg) {
         packagesByName[pkg.name] = pkg
       })
     }
@@ -413,20 +417,21 @@ module.exports = {
     const choices = this.getChoices(groups, question, getChoicesFct, previousUserInputs)
     const promise = this.getUserInputForGroups(groups, question, choices)
     if (promise) {
-      return promise.then((userInputs) => {
+      const self = this
+      return promise.then(function (userInputs) {
         // Once we get the input of the user, we display a summary and we ask
         // the user to confirm the action for each group.
         const actionByGroup = actionHandler.getByEntity(groups,
                                         userInputs[question.name],
                                         getActionByGroupFct)
         // Display summary
-        this.displaySummary(groups, actionByGroup)
+        self.displaySummary(groups, actionByGroup)
         // Confirm choices
-        return this.getConfirmedPkgsSelected(
+        return self.getConfirmedPkgsSelected(
           actionByGroup,
-          { fct: this.getPackagesToModify.bind(this),
+          { fct: self.getPackagesToModify.bind(self),
             params: {groups, actionByGroup}},
-          { fct: this.getSelectedPkgs.bind(this),
+          { fct: self.getSelectedPkgs.bind(self),
             params: {groups, question, getChoicesFct, getActionByGroupFct, userInputs}})
       })
     }
@@ -481,7 +486,7 @@ module.exports = {
    */
   getConfirmedPkgsSelected (actionByGroup, getSelected, goBackToSelection) {
     if (this.isConfirmationRequired(actionByGroup)) {
-      return this.getConfirmationUserInput(QUESTION_CONFIRM).then((confirmUserInput) => {
+      return this.getConfirmationUserInput(QUESTION_CONFIRM).then(function (confirmUserInput) {
         if (confirmUserInput[QUESTION_CONFIRM.name]) {
           display.carriageReturn()
           const params = getSelected.params
@@ -554,7 +559,7 @@ module.exports = {
    */
   getSummaryByGroup (name, group, action) {
     if (name && group && action) {
-      return `${actionHandler.toString(action)} ${groupHandler.toString(name, group)}`
+      return actionHandler.toString(action) + ' ' + groupHandler.toString(name, group)
     }
   }
 }

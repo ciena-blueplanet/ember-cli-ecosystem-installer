@@ -1,3 +1,8 @@
+# 0.7.0
+* Rename the repository from ember-frost-lts to ember-cli-ecosystem-installer
+
+
+
 # 0.6.0
 * Change the keyword we are using to get the addon that has lts.json files.
 

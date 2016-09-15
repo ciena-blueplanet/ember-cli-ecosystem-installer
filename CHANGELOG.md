@@ -1,3 +1,8 @@
+# 0.6.0
+* Change the keyword we are using to get the addon that has lts.json files.
+
+
+
 # 0.5.0
 * Change paradigm from install (first screen) + uninstall (second screen) to  features from the LTS (first screen) and other packages already installed (second screen)
 * Support installing and uninstalling on the first screen

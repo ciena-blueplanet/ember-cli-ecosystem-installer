@@ -20,8 +20,8 @@ var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
     'Choose the LTS features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   QUESTION_OTHER_GROUPS:
-    'Choose the application specific packages to keep [' +
-    figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
+    'Choose the application specific packages to keep [' + figures.radioOn +
+    ' ] or uninstall [' + figures.radioOff + ' ]',
   INSTALLING_LTS: 'Installing LTS',
   LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
   LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',

@@ -39,7 +39,7 @@ module.exports = function (environment) {
   }
 
   if (environment === 'production') {
-    ENV.rootURL = '/frost-lts'
+    ENV.rootURL = '/ember-cli-ecosystem-installer'
     ENV.isDemo = true
   }
 

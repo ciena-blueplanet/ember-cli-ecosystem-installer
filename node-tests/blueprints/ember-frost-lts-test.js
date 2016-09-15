@@ -46,6 +46,15 @@ var otherPkgsToSelectByDefaylt = [
   'ember-frost-lts'
 ]
 
+var installedPkgsMochaCoreD3 = [
+  {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
+  {name: 'ember-frost-core', version: '0.25.3', dev: true},       // installed
+  {name: 'ember-d3', version: '0.2.0', dev: true}                 // installed
+]
+var installedPkgsChai = [
+  {name: 'ember-cli-mocha', version: '0.2.0', dev: true}        // installed
+]
+
 describe('Acceptance: ember generate ember-frost-lts', function () {
   setupTestHooks(this)
 
@@ -245,9 +254,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
         return emberNew()
           .then(function () {
-            modifyPackages([
-              {name: 'ember-cli-mocha', version: '0.2.0', dev: true}      // installed
-            ])
+            modifyPackages(installedPkgsChai)
           })
           .then(function () { return emberGenerate(args) })
           .then(function () {
@@ -346,11 +353,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(function () {
-              modifyPackages([
-                {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
-                {name: 'ember-frost-core', version: '0.25.3', dev: true},       // installed
-                {name: 'ember-d3', version: '0.2.0', dev: true}                 // installed
-              ])
+              modifyPackages(installedPkgsMochaCoreD3)
             })
             .then(function () { return emberGenerate(args) })
             .then(function () {
@@ -388,7 +391,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
             .then(function () {
               modifyPackages([
                 {name: 'ember-cli-mocha', version: '0.1.0', dev: true},         // to update
-                {name: 'ember-frost-core', version: '0.25.2', dev: true},       // to update
+                {name: 'ember-frost-core', version: '0.25.1', dev: true},       // to update
                 {name: 'ember-d3', version: '0.1.0', dev: true}                 // to update
               ])
             })
@@ -407,11 +410,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(function () {
-              modifyPackages([
-                {name: 'ember-cli-mocha', version: '0.2.0', dev: true},         // installed
-                {name: 'ember-frost-core', version: '0.25.3', dev: true},       // installed
-                {name: 'ember-d3', version: '0.2.0', dev: true}                 // installed
-              ])
+              modifyPackages(installedPkgsMochaCoreD3)
             })
             .then(function () { return emberGenerate(args) })
             .then(function () {
@@ -461,9 +460,7 @@ describe('Acceptance: ember generate ember-frost-lts', function () {
 
           return emberNew()
             .then(function () {
-              modifyPackages([
-                {name: 'ember-cli-mocha', version: '0.2.0', dev: true}        // installed
-              ])
+              modifyPackages(installedPkgsChai)
             })
             .then(function () { return emberGenerate(args) })
             .then(function () {

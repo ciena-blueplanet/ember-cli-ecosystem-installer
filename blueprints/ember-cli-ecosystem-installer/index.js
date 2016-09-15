@@ -18,13 +18,13 @@ var display = require('../../lib/ui/display')
 
 var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
-    'Choose the LTS features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
+    'Choose the ecosystem features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   QUESTION_OTHER_GROUPS:
     'Choose the application specific packages to keep [' + figures.radioOn +
     ' ] or uninstall [' + figures.radioOff + ' ]',
-  INSTALLING_LTS: 'Installing LTS',
-  LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
-  LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',
+  INSTALLING_ECOSYSTEM: 'Installing ecosystem features',
+  LOADING_VALIDATING_ECOSYSTEM_FILES: 'Loading and validating ecosystem files',
+  LOADED_VALIDATED_ECOSYSTEM_FILES: 'Loaded and validated ecosystem files\n',
   CONFIRMATION: 'Would you like to confirm the following choices',
   SUMMARY: 'Summary of the operations that will be done',
   UNINSTALLING_PKGS: 'Uninstalling packages',
@@ -74,12 +74,12 @@ module.exports = {
    */
   afterInstall: function (options) {
     this.displayWelcomeTag()
-    display.title(MESSAGES.INSTALLING_LTS)
-    display.title(MESSAGES.LOADING_VALIDATING_LTS_FILES)
+    display.title(MESSAGES.INSTALLING_ECOSYSTEM)
+    display.title(MESSAGES.LOADING_VALIDATING_ECOSYSTEM_FILES)
     var existingPkgs = externalApplicationUtil.getExistingPkgs(options)
     var recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
     var otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
-    display.title(MESSAGES.LOADED_VALIDATED_LTS_FILES)
+    display.title(MESSAGES.LOADED_VALIDATED_ECOSYSTEM_FILES)
 
     var recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
 
@@ -115,7 +115,7 @@ module.exports = {
     console.log('|    |   |    |  \\_____  \\ ')
     console.log('|    |___|    |  /        \\ ')
     console.log('|________\\____| /_________/ ')
-    console.log('Tool to install/uninstall LTS packages\n')
+    console.log('Tool to install/uninstall the LTS ecosystem packages\n')
   },
 
   /**
@@ -602,4 +602,3 @@ module.exports = {
     }
   }
 }
-

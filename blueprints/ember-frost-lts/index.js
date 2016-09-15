@@ -8,8 +8,8 @@ var actionsEnum = actionHandler.actionsEnum
 var userInputHandler = require('../../lib/ui/user-input')
 var groupHandler = require('../../lib/models/group')
 var packageHandler = require('../../lib/models/package')
-var externalAppPackagesUtil = require('../../lib/utils/external-app-packages')
-var requestedPackagesUtil = require('../../lib/utils/requested-packages')
+var externalApplicationUtil = require('../../lib/utils/external-application')
+var recommendedGroupsUtil = require('../../lib/utils/recommended-groups')
 var objUtil = require('../../lib/utils/obj')
 var stateHandler = require('../../lib/models/state')
 var statesEnum = stateHandler.statesEnum
@@ -20,7 +20,8 @@ var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
     'Choose the LTS features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   QUESTION_OTHER_GROUPS:
-    'Choose the non LTS packages to keep$ [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
+    'Choose the application specific packages to keep [' +
+    figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   INSTALLING_LTS: 'Installing LTS',
   LOADING_VALIDATING_LTS_FILES: 'Loading and validating LTS files',
   LOADED_VALIDATED_LTS_FILES: 'Loaded and validated LTS files\n',
@@ -58,11 +59,13 @@ module.exports = {
       default: ''
     }
   ],
+
   normalizeEntityName: function () {
     // this prevents an error when the entityName is
     // not specified (since that doesn't actually matter
     // to us
   },
+
   /**
    * Query the user to determine which packages/groups he wants to install.
    * Note: Some packages/groups are mandatory and the others are optional
@@ -73,7 +76,7 @@ module.exports = {
     this.displayWelcomeTag()
     display.title(MESSAGES.INSTALLING_LTS)
     display.title(MESSAGES.LOADING_VALIDATING_LTS_FILES)
-    var existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
+    var existingPkgs = externalApplicationUtil.getExistingPkgs(options)
     var recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
     var otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
     display.title(MESSAGES.LOADED_VALIDATED_LTS_FILES)
@@ -102,6 +105,7 @@ module.exports = {
       }
     }
   },
+
   /**
    * Display welcome tag
    */
@@ -113,6 +117,7 @@ module.exports = {
     console.log('|________\\____| /_________/ ')
     console.log('Tool to install/uninstall LTS packages\n')
   },
+
   /**
    * Uninstall and install the packages passed in parameter.
    * @param {object} packages the packages to install/uninstall
@@ -133,6 +138,7 @@ module.exports = {
       return this.installPkgs(packages)
     }
   },
+
   /**
    * Uninstall the packages passed in parameter.
    * @param {object} packages the packages to install/uninstall
@@ -145,6 +151,7 @@ module.exports = {
       return this.removePackagesFromProject(packagesToUninstall)
     }
   },
+
   /**
    * Install the packages passed in parameter.
    * @param {object} packages the packages to install/uninstall
@@ -189,6 +196,7 @@ module.exports = {
       }
     }
   },
+
   /**
    * Returns true if the package is an addon and false otherwise.
    * @param {object} pkgInfo the information of the package
@@ -197,6 +205,7 @@ module.exports = {
   isAddon: function (pkgInfo) {
     return pkgInfo.keywords.indexOf('ember-addon') > -1
   },
+
   /**
    * Get the information for all the packages.
    * @param {array} packages a list of package
@@ -209,6 +218,7 @@ module.exports = {
     })
     return promises
   },
+
   /**
    * Get the packages by name.
    * @param {array} packages a list of packages
@@ -233,21 +243,22 @@ module.exports = {
    * @returns {object} contains all the groups.
    */
   getRecommendedGroups: function (options, existingPkgs) {
-    var isThisAddonInstalled = externalAppPackagesUtil.isThisAddonInstalled(options)
+    var isThisAddonInstalled = externalApplicationUtil.isThisAddonInstalled(options)
 
     // Get the mandatory groups
-    var mandatoryRequestedGroupsNPkgs = requestedPackagesUtil.getMandatoryGroupsNPkgs(options)
+    var mandatoryRequestedGroupsNPkgs = recommendedGroupsUtil.getMandatoryGroupsNPkgs(options)
     var mandatoryGroups = groupHandler.createRequestedGroups(mandatoryRequestedGroupsNPkgs, existingPkgs,
                         isThisAddonInstalled, true)
 
     // Get the optional groups
-    var optionalRequestedGroupsNPkgs = requestedPackagesUtil.getOptionalGroupsNPkgs(options)
+    var optionalRequestedGroupsNPkgs = recommendedGroupsUtil.getOptionalGroupsNPkgs(options)
     var optionalGroups = groupHandler.createRequestedGroups(optionalRequestedGroupsNPkgs, existingPkgs,
                         isThisAddonInstalled, false)
 
     // Get all the groups
     return _.merge(mandatoryGroups, optionalGroups, objUtil.mergeArray)
   },
+
   /**
    * Get the recommended packages.
    * @param {object} groups all recommended the groups
@@ -260,6 +271,7 @@ module.exports = {
       this.getChoiceForGroup.bind(this),
       this.getActionForRecommendedGroup)
   },
+
   /**
    * Get the action that will need to be done for a group.
    * @param {string} name name of the group
@@ -293,6 +305,7 @@ module.exports = {
     var otherPackages = this.getOtherPkgs(existingPkgs, groupsToExclude)
     return groupHandler.createGroups(otherPackages)
   },
+
   /**
    * Get the other packages.
    * @param {object} existingPkgs the existing packages
@@ -311,6 +324,7 @@ module.exports = {
     }
     return otherPackages
   },
+
   /**
    * Get the other packages.
    * @param {object} groups all the other groups
@@ -323,6 +337,7 @@ module.exports = {
       this.getChoiceForGroup.bind(this),
       this.getActionForOtherGroup)
   },
+
   /**
    * Get the action that will need to be done for a group.
    * @param {string} name name of the group
@@ -360,6 +375,7 @@ module.exports = {
       disabled: this.isGroupDisabledByDefault(group)
     }
   },
+
   /**
    * Returns true if the group is selected by default and false otherwise.
    * @param {object} group the group
@@ -368,6 +384,7 @@ module.exports = {
   isGroupSelectedByDefault: function (group) {
     return group.state === statesEnum.INSTALLED || group.isMandatory || this.isCandidateForAutomaticUpdate(group)
   },
+
   /**
    * Returns true if the group is a candidate for an automatic update and false otherwise.
    * @param {object} group the group
@@ -376,6 +393,7 @@ module.exports = {
   isCandidateForAutomaticUpdate: function (group) {
     return group.state === statesEnum.NEED_UPDATE && group.isThisAddonInstalled
   },
+
   /**
    * Returns true if the group is disabled by default and false otherwise.
    * @param {object} group the group
@@ -402,6 +420,7 @@ module.exports = {
     var choicesSelectedPreviously = (previousUserInputs === undefined) ? undefined : previousUserInputs[question.name]
     return userInputHandler.getChoices(groups, getChoicesFct, choicesSelectedPreviously)
   },
+
   /**
    * Get the selection of the user.
    * @param {object} groups all the groups the user can select
@@ -445,6 +464,7 @@ module.exports = {
       })
     }
   },
+
   /**
    * Get the packages to modify  by action for all the groups.
    * @param {object} groups all the groups
@@ -471,6 +491,7 @@ module.exports = {
 
     return packagesByAction
   },
+
   /**
    * Get the packages to modify  by action for this group.
    * @param {object} group the group
@@ -485,6 +506,7 @@ module.exports = {
 
     return packagesToModifyByAction
   },
+
   /**
    * Prompt the user to confirm the actions selected for each group.
    * @param {object} actionByGroup the action that will be done for each group
@@ -509,6 +531,7 @@ module.exports = {
       })
     }
   },
+
   /**
    * Prompt the user for a confirmation.
    * @param {object} question the question to ask the user
@@ -518,6 +541,7 @@ module.exports = {
     return userInputHandler.getUserInputForChoice(this,
       {type: 'confirm', name: question.name, message: question.message}, [])
   },
+
   /**
    * Returns true if the confirmation is required for the actions to be done by groups and false otherwise.
    * @param {object} actionByGroup the action that will be done for each group
@@ -526,6 +550,7 @@ module.exports = {
   isConfirmationRequired: function (actionByGroup) {
     return actionHandler.isAnyActionCompliant(actionByGroup, this.isConfirmationRequiredForGroup)
   },
+
   /**
    * Returns true if a confirmation is required for this group and false otherwise.
    * @param {string} action the action to do on the group
@@ -534,6 +559,7 @@ module.exports = {
   isConfirmationRequiredForGroup: function (action) {
     return action !== actionsEnum.IDENTICAL
   },
+
   /**
    * Prompt the user with a set of choices for the groups.
    * @param {object} groups an object containing all the groups
@@ -560,6 +586,7 @@ module.exports = {
       display.message(this.getSummaryByGroup(groupName, groups[groupName], actionByGroup[groupName]))
     }
   },
+
   /**
    * Get the summary for a group.
    * @param {string} name the name of the group
@@ -569,7 +596,9 @@ module.exports = {
    */
   getSummaryByGroup: function (name, group, action) {
     if (name && group && action) {
-      return actionHandler.toString(action) + ' ' + groupHandler.toString(name, group)
+      return actionHandler.toString(action) + ' ' +
+        groupHandler.toString(name, group) + ' ' +
+        ((groupHandler.isDowngrade(group)) ? display.getWarning('Downgrade') : '')
     }
   }
 }

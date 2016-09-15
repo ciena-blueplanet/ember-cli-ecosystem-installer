@@ -1,7 +1,7 @@
 {
   "package3": {
     "packages": {
-      "my-package": "0.2.0"
+      "ember-cli-mocha": "0.2.0"
     }
   },
   "package4": {
@@ -10,5 +10,5 @@
       "ember-d3": "0.2.0"
     }
   },
-  "ember-prop-types": "~0.2.0"
+  "ember-prop-types": "~3.0.0"
 }

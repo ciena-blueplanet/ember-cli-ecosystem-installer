@@ -1,22 +1,22 @@
 'use strict'
 
-const _ = require('lodash')
-const figures = require('figures')
+var _ = require('lodash')
+var figures = require('figures')
 
-const actionHandler = require('../../lib/models/action')
-const actionsEnum = actionHandler.actionsEnum
-const userInputHandler = require('../../lib/ui/user-input')
-const groupHandler = require('../../lib/models/group')
-const packageHandler = require('../../lib/models/package')
-const externalAppPackagesUtil = require('../../lib/utils/external-app-packages')
-const requestedPackagesUtil = require('../../lib/utils/requested-packages')
-const objUtil = require('../../lib/utils/obj')
-const stateHandler = require('../../lib/models/state')
-const statesEnum = stateHandler.statesEnum
-const npm = require('../../lib/utils/npm')
-const display = require('../../lib/ui/display')
+var actionHandler = require('../../lib/models/action')
+var actionsEnum = actionHandler.actionsEnum
+var userInputHandler = require('../../lib/ui/user-input')
+var groupHandler = require('../../lib/models/group')
+var packageHandler = require('../../lib/models/package')
+var externalAppPackagesUtil = require('../../lib/utils/external-app-packages')
+var requestedPackagesUtil = require('../../lib/utils/requested-packages')
+var objUtil = require('../../lib/utils/obj')
+var stateHandler = require('../../lib/models/state')
+var statesEnum = stateHandler.statesEnum
+var npm = require('../../lib/utils/npm')
+var display = require('../../lib/ui/display')
 
-const MESSAGES = {
+var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
     'Choose the LTS features to install [' + figures.radioOn + ' ] or uninstall [' + figures.radioOff + ' ]',
   QUESTION_OTHER_GROUPS:
@@ -32,22 +32,22 @@ const MESSAGES = {
   INSTALLING_PKGS: 'Installing packages'
 }
 
-const QUESTION_RECOMMENDED_GROUPS = {
+var QUESTION_RECOMMENDED_GROUPS = {
   name: 'userInputRecommendGroups',
   message: MESSAGES.QUESTION_RECOMMENDED_GROUPS
 }
 
-const QUESTION_OTHER_GROUPS = {
+var QUESTION_OTHER_GROUPS = {
   name: 'userInputOtherGroups',
   message: MESSAGES.QUESTION_OTHER_GROUPS
 }
 
-const QUESTION_CONFIRM = {
+var QUESTION_CONFIRM = {
   name: 'confirmSelection',
   message: MESSAGES.CONFIRMATION
 }
 
-const MANDATORY_TO_STR = 'mandatory'
+var MANDATORY_TO_STR = 'mandatory'
 
 module.exports = {
   description: 'Install requested packages',
@@ -73,20 +73,20 @@ module.exports = {
     this.displayWelcomeTag()
     display.title(MESSAGES.INSTALLING_LTS)
     display.title(MESSAGES.LOADING_VALIDATING_LTS_FILES)
-    const existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
-    const recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
-    const otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
+    var existingPkgs = externalAppPackagesUtil.getExistingPkgs(options)
+    var recommendedGroups = this.getRecommendedGroups(options, existingPkgs)
+    var otherGroups = this.getOtherGroups(existingPkgs, recommendedGroups)
     display.title(MESSAGES.LOADED_VALIDATED_LTS_FILES)
 
-    const recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
+    var recommendGroupsPromise = this.getSelectedRecommendedPkgs(recommendedGroups)
 
+    var self = this
     if (recommendGroupsPromise) {
-      const self = this
       return recommendGroupsPromise.then(function (recommendedPackagesToModify) {
-        const otherGroupsPromise = self.getSelectedOtherPkgs(otherGroups)
+        var otherGroupsPromise = self.getSelectedOtherPkgs(otherGroups)
         if (otherGroupsPromise) {
           return otherGroupsPromise.then(function (otherPackagesToModify) {
-            const pkgsToModify = objUtil.merge(otherPackagesToModify, recommendedPackagesToModify)
+            var pkgsToModify = _.mergeWith(otherPackagesToModify, recommendedPackagesToModify, objUtil.mergeArray)
             return self.uninstallAndInstallPkgs(pkgsToModify)
           })
         } else {
@@ -94,9 +94,8 @@ module.exports = {
         }
       })
     } else {
-      const otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
+      var otherGroupsPromise = this.getSelectedOtherPkgs(otherGroups)
       if (otherGroupsPromise) {
-        const self = this
         return otherGroupsPromise.then(function (otherPackagesToModify) {
           return self.uninstallAndInstallPkgs(otherPackagesToModify)
         })
@@ -106,7 +105,7 @@ module.exports = {
   /**
    * Display welcome tag
    */
-  displayWelcomeTag () {
+  displayWelcomeTag: function () {
     console.log('.____  ____________________  ')
     console.log('|    | \\__    ___/   _____/ ')
     console.log('|    |   |    |  \\_____  \\ ')
@@ -119,14 +118,14 @@ module.exports = {
    * @param {object} packages the packages to install/uninstall
    * @returns {Promise} a promise to uninstall/install packages
    */
-  uninstallAndInstallPkgs (packages) {
+  uninstallAndInstallPkgs: function (packages) {
     display.carriageReturn()
     // Unistall the packages
-    let removePackagesPromise = this.unistallPkgs(packages)
+    var removePackagesPromise = this.unistallPkgs(packages)
 
     // Install the packages
     if (removePackagesPromise) {
-      const self = this
+      var self = this
       return removePackagesPromise.then(function () {
         return self.installPkgs(packages)
       })
@@ -139,10 +138,10 @@ module.exports = {
    * @param {object} packages the packages to install/uninstall
    * @returns {Promise} a promise to uninstall packages
    */
-  unistallPkgs (packages) {
+  unistallPkgs: function (packages) {
     if (packages && packages[actionsEnum.REMOVE]) {
       display.title(MESSAGES.UNINSTALLING_PKGS)
-      const packagesToUninstall = packages[actionsEnum.REMOVE]
+      var packagesToUninstall = packages[actionsEnum.REMOVE]
       return this.removePackagesFromProject(packagesToUninstall)
     }
   },
@@ -151,27 +150,27 @@ module.exports = {
    * @param {object} packages the packages to install/uninstall
    * @returns {Promise} a promise to install packages
    */
-  installPkgs (packages) {
+  installPkgs: function (packages) {
     if (packages) {
       display.title(MESSAGES.INSTALLING_PKGS)
-      const packagesToInstall = packages[actionsEnum.OVERWRITE]
-      const packagesToInstallByName = this.getPackagesByName(packagesToInstall)
+      var packagesToInstall = packages[actionsEnum.OVERWRITE]
+      var packagesToInstallByName = this.getPackagesByName(packagesToInstall)
 
       if (packagesToInstall && !_.isEmpty(packagesToInstall)) {
-        let spinner = display.getSpinner(MESSAGES.CHECKING_PACKAGES)
+        var spinner = display.getSpinner(MESSAGES.CHECKING_PACKAGES)
         spinner.start()
 
-        const promises = this.getPkgsInfo(packagesToInstall)
+        var promises = this.getPkgsInfo(packagesToInstall)
 
-        const self = this
+        var self = this
         return Promise.all(promises).then(function (results) {
           spinner.stop(true)
           display.message(MESSAGES.CHECKED_PACKAGES)
 
-          let addons = []
-          let nonAddons = []
+          var addons = []
+          var nonAddons = []
           results.forEach(function (result) {
-            const pkg = packagesToInstallByName[result.name]
+            var pkg = packagesToInstallByName[result.name]
             if (self.isAddon(result)) {
               addons.push(pkg)
             } else {
@@ -179,8 +178,8 @@ module.exports = {
             }
           })
 
-          const addAddonsPromise = self.addAddonsToProject({ packages: addons })
-          let addPkgsPromise
+          var addAddonsPromise = self.addAddonsToProject({ packages: addons })
+          var addPkgsPromise
           if (!_.isEmpty(nonAddons)) {
             addPkgsPromise = self.addPackagesToProject(nonAddons)
           }
@@ -195,7 +194,7 @@ module.exports = {
    * @param {object} pkgInfo the information of the package
    * @returns {boolean} true if the package is an addon and false otherwise
    */
-  isAddon (pkgInfo) {
+  isAddon: function (pkgInfo) {
     return pkgInfo.keywords.indexOf('ember-addon') > -1
   },
   /**
@@ -203,8 +202,8 @@ module.exports = {
    * @param {array} packages a list of package
    * @returns {array} a list of promises to get the information of all the packages
    */
-  getPkgsInfo (packages) {
-    let promises = []
+  getPkgsInfo: function (packages) {
+    var promises = []
     packages.forEach(function (pkg) {
       promises.push(npm.view(packageHandler.toString(pkg.name, pkg)))
     })
@@ -215,8 +214,8 @@ module.exports = {
    * @param {array} packages a list of packages
    * @returns {object} the packages in an object
    */
-  getPackagesByName (packages) {
-    const packagesByName = {}
+  getPackagesByName: function (packages) {
+    var packagesByName = {}
     if (!_.isEmpty(packages)) {
       packages.forEach(function (pkg) {
         packagesByName[pkg.name] = pkg
@@ -233,29 +232,28 @@ module.exports = {
    * @param {object} existingPkgs the existing packages
    * @returns {object} contains all the groups.
    */
-  getRecommendedGroups (options, existingPkgs) {
-    const isThisAddonInstalled = externalAppPackagesUtil.isThisAddonInstalled(options)
+  getRecommendedGroups: function (options, existingPkgs) {
+    var isThisAddonInstalled = externalAppPackagesUtil.isThisAddonInstalled(options)
 
     // Get the mandatory groups
-    const mandatoryRequestedGroupsNPkgs = requestedPackagesUtil.getMandatoryGroupsNPkgs(options)
-    const mandatoryGroups = groupHandler.createRequestedGroups(mandatoryRequestedGroupsNPkgs, existingPkgs,
+    var mandatoryRequestedGroupsNPkgs = requestedPackagesUtil.getMandatoryGroupsNPkgs(options)
+    var mandatoryGroups = groupHandler.createRequestedGroups(mandatoryRequestedGroupsNPkgs, existingPkgs,
                         isThisAddonInstalled, true)
 
     // Get the optional groups
-    const optionalRequestedGroupsNPkgs = requestedPackagesUtil.getOptionalGroupsNPkgs(options)
-    const optionalGroups = groupHandler.createRequestedGroups(optionalRequestedGroupsNPkgs, existingPkgs,
+    var optionalRequestedGroupsNPkgs = requestedPackagesUtil.getOptionalGroupsNPkgs(options)
+    var optionalGroups = groupHandler.createRequestedGroups(optionalRequestedGroupsNPkgs, existingPkgs,
                         isThisAddonInstalled, false)
 
     // Get all the groups
-    return objUtil.merge(mandatoryGroups, optionalGroups)
+    return _.merge(mandatoryGroups, optionalGroups, objUtil.mergeArray)
   },
   /**
    * Get the recommended packages.
    * @param {object} groups all recommended the groups
    * @returns {Promise} a promise that will return all the selected recommended packages
    */
-  // TODO: note in pkg.json dependency node 5 + bcs of bind
-  getSelectedRecommendedPkgs (groups) {
+  getSelectedRecommendedPkgs: function (groups) {
     return this.getSelectedPkgs(
       groups,
       QUESTION_RECOMMENDED_GROUPS,
@@ -269,8 +267,8 @@ module.exports = {
    * @param {boolean} isInUserInput true if the user selected that group and false otherwise
    * @returns {string} the action for this group
    */
-  getActionForRecommendedGroup (name, group, isInUserInput) {
-    let action = actionsEnum.SKIP
+  getActionForRecommendedGroup: function (name, group, isInUserInput) {
+    var action = actionsEnum.SKIP
 
     if (isInUserInput || group.isMandatory) {
       action = actionsEnum.OVERWRITE
@@ -291,8 +289,8 @@ module.exports = {
    * @param {object} groupsToExclude all the groups that need to be excluded
    * @returns {object} contains all the other groups
    */
-  getOtherGroups (existingPkgs, groupsToExclude) {
-    const otherPackages = this.getOtherPkgs(existingPkgs, groupsToExclude)
+  getOtherGroups: function (existingPkgs, groupsToExclude) {
+    var otherPackages = this.getOtherPkgs(existingPkgs, groupsToExclude)
     return groupHandler.createGroups(otherPackages)
   },
   /**
@@ -301,12 +299,12 @@ module.exports = {
    * @param {object} groupsToExclude the groups to exclude
    * @returns {object} contains all the other packages
    */
-  getOtherPkgs (existingPkgs, groupsToExclude) {
-    let otherPackages = {}
-    const packagesToExclude = groupHandler.getPackageNames(groupsToExclude)
+  getOtherPkgs: function (existingPkgs, groupsToExclude) {
+    var otherPackages = {}
+    var packagesToExclude = groupHandler.getPackageNames(groupsToExclude)
 
-    for (let pkgName in existingPkgs) {
-      const pkg = existingPkgs[pkgName]
+    for (var pkgName in existingPkgs) {
+      var pkg = existingPkgs[pkgName]
       if (packagesToExclude.indexOf(pkgName) === -1) {
         otherPackages[pkgName] = pkg
       }
@@ -318,7 +316,7 @@ module.exports = {
    * @param {object} groups all the other groups
    * @returns {Promise} a promise that will return all the other selected packages
    */
-  getSelectedOtherPkgs (groups) {
+  getSelectedOtherPkgs: function (groups) {
     return this.getSelectedPkgs(
       groups,
       QUESTION_OTHER_GROUPS,
@@ -332,8 +330,8 @@ module.exports = {
    * @param {boolean} isInUserInput true if the user selected that group and false otherwise
    * @returns {string} the action for this group
    */
-  getActionForOtherGroup (name, group, isInUserInput) {
-    let action = actionsEnum.SKIP
+  getActionForOtherGroup: function (name, group, isInUserInput) {
+    var action = actionsEnum.SKIP
 
     if (group.state === statesEnum.INSTALLED) {
       if (isInUserInput) {
@@ -354,7 +352,7 @@ module.exports = {
    * @param {boolean} wasInUserInput true is the user previously selected that choice
    * @returns {object} the choice for a group
    */
-  getChoiceForGroup (name, group, wasInUserInput) {
+  getChoiceForGroup: function (name, group, wasInUserInput) {
     return {
       value: name,
       name: groupHandler.toString(name, group),
@@ -367,7 +365,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is selected by default and false otherwise
    */
-  isGroupSelectedByDefault (group) {
+  isGroupSelectedByDefault: function (group) {
     return group.state === statesEnum.INSTALLED || group.isMandatory || this.isCandidateForAutomaticUpdate(group)
   },
   /**
@@ -375,7 +373,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is a candidate for an automatic update and false otherwise
    */
-  isCandidateForAutomaticUpdate (group) {
+  isCandidateForAutomaticUpdate: function (group) {
     return group.state === statesEnum.NEED_UPDATE && group.isThisAddonInstalled
   },
   /**
@@ -383,7 +381,7 @@ module.exports = {
    * @param {object} group the group
    * @returns {boolean} true if the group is disabled by default and false otherwise
    */
-  isGroupDisabledByDefault (group) {
+  isGroupDisabledByDefault: function (group) {
     if (group.isMandatory) {
       return MANDATORY_TO_STR
     }
@@ -400,8 +398,8 @@ module.exports = {
    * @param {object} previousUserInputs the previous user inputs (will be null on the first call of this method)
    * @returns {object} all the choices
    */
-  getChoices (groups, question, getChoicesFct, previousUserInputs) {
-    const choicesSelectedPreviously = (previousUserInputs === undefined) ? undefined : previousUserInputs[question.name]
+  getChoices: function (groups, question, getChoicesFct, previousUserInputs) {
+    var choicesSelectedPreviously = (previousUserInputs === undefined) ? undefined : previousUserInputs[question.name]
     return userInputHandler.getChoices(groups, getChoicesFct, choicesSelectedPreviously)
   },
   /**
@@ -413,15 +411,15 @@ module.exports = {
    * @param {object} previousUserInputs the previous user inputs (will be null on the first call of this method)
    * @returns {Promise} a promise that will return all the selected groups
    */
-  getSelectedPkgs (groups, question, getChoicesFct, getActionByGroupFct, previousUserInputs) {
-    const choices = this.getChoices(groups, question, getChoicesFct, previousUserInputs)
-    const promise = this.getUserInputForGroups(groups, question, choices)
+  getSelectedPkgs: function (groups, question, getChoicesFct, getActionByGroupFct, previousUserInputs) {
+    var choices = this.getChoices(groups, question, getChoicesFct, previousUserInputs)
+    var promise = this.getUserInputForGroups(groups, question, choices)
     if (promise) {
-      const self = this
+      var self = this
       return promise.then(function (userInputs) {
         // Once we get the input of the user, we display a summary and we ask
         // the user to confirm the action for each group.
-        const actionByGroup = actionHandler.getByEntity(groups,
+        var actionByGroup = actionHandler.getByEntity(groups,
                                         userInputs[question.name],
                                         getActionByGroupFct)
         // Display summary
@@ -430,9 +428,20 @@ module.exports = {
         return self.getConfirmedPkgsSelected(
           actionByGroup,
           { fct: self.getPackagesToModify.bind(self),
-            params: {groups, actionByGroup}},
+            params: {
+              groups: groups,
+              actionByGroup: actionByGroup
+            }
+          },
           { fct: self.getSelectedPkgs.bind(self),
-            params: {groups, question, getChoicesFct, getActionByGroupFct, userInputs}})
+            params: {
+              groups: groups,
+              question: question,
+              getChoicesFct: getChoicesFct,
+              getActionByGroupFct: getActionByGroupFct,
+              userInputs: userInputs
+            }
+          })
       })
     }
   },
@@ -442,15 +451,15 @@ module.exports = {
    * @param {object} actionByGroup the action that will be done for each group
    * @returns {object} a list of packages by action
    */
-  getPackagesToModify (groups, actionByGroup) {
-    let packagesByAction = {}
-    for (let groupName in groups) {
-      const group = groups[groupName]
-      const action = actionByGroup[groupName]
+  getPackagesToModify: function (groups, actionByGroup) {
+    var packagesByAction = {}
+    for (var groupName in groups) {
+      var group = groups[groupName]
+      var action = actionByGroup[groupName]
 
-      const pkgsToModifyByAction = this.getPackagesToModifyByActionForGroup(group, action)
+      var pkgsToModifyByAction = this.getPackagesToModifyByActionForGroup(group, action)
       if (!_.isEmpty(pkgsToModifyByAction)) {
-        let currentPackagesByAction = packagesByAction[action]
+        var currentPackagesByAction = packagesByAction[action]
 
         if (!currentPackagesByAction) {
           currentPackagesByAction = []
@@ -468,8 +477,8 @@ module.exports = {
    * @param {string} action the action to do on the group
    * @returns {object} a list of packages by action
    */
-  getPackagesToModifyByActionForGroup (group, action) {
-    let packagesToModifyByAction = {}
+  getPackagesToModifyByActionForGroup: function (group, action) {
+    var packagesToModifyByAction = {}
     if (action === actionsEnum.OVERWRITE || action === actionsEnum.REMOVE) {
       packagesToModifyByAction[action] = groupHandler.getPkgsBy(group, packageHandler.getPackageObj)
     }
@@ -484,15 +493,16 @@ module.exports = {
    * @returns {Promise} a promise that will return back the user to the selection or
    *          {object} a list of the packages selected
    */
-  getConfirmedPkgsSelected (actionByGroup, getSelected, goBackToSelection) {
+  getConfirmedPkgsSelected: function (actionByGroup, getSelected, goBackToSelection) {
     if (this.isConfirmationRequired(actionByGroup)) {
       return this.getConfirmationUserInput(QUESTION_CONFIRM).then(function (confirmUserInput) {
+        var params
         if (confirmUserInput[QUESTION_CONFIRM.name]) {
           display.carriageReturn()
-          const params = getSelected.params
+          params = getSelected.params
           return getSelected.fct(params.groups, params.actionByGroup)
         } else {
-          const params = goBackToSelection.params
+          params = goBackToSelection.params
           return goBackToSelection.fct(params.groups, params.question, params.getChoicesFct,
             params.getActionByGroupFct, params.userInputs)
         }
@@ -504,7 +514,7 @@ module.exports = {
    * @param {object} question the question to ask the user
    * @returns {Promise} the promise containing the user input
    */
-  getConfirmationUserInput (question) {
+  getConfirmationUserInput: function (question) {
     return userInputHandler.getUserInputForChoice(this,
       {type: 'confirm', name: question.name, message: question.message}, [])
   },
@@ -513,7 +523,7 @@ module.exports = {
    * @param {object} actionByGroup the action that will be done for each group
    * @returns {boolean} true if the confirmation is required for the actions to be done by groups and false otherwise
    */
-  isConfirmationRequired (actionByGroup) {
+  isConfirmationRequired: function (actionByGroup) {
     return actionHandler.isAnyActionCompliant(actionByGroup, this.isConfirmationRequiredForGroup)
   },
   /**
@@ -521,7 +531,7 @@ module.exports = {
    * @param {string} action the action to do on the group
    * @returns {boolean} true if a confirmation is required for this group and false otherwise
    */
-  isConfirmationRequiredForGroup (action) {
+  isConfirmationRequiredForGroup: function (action) {
     return action !== actionsEnum.IDENTICAL
   },
   /**
@@ -531,7 +541,7 @@ module.exports = {
    * @param {array} choices the choices that will be shown to the user
    * @returns {Promise} the promise containing the user input
    */
-  getUserInputForGroups (groups, question, choices) {
+  getUserInputForGroups: function (groups, question, choices) {
     if (!_.isEmpty(choices)) {
       return userInputHandler.getUserInputForChoice(this,
         {type: 'checkbox', name: question.name, message: question.message}, choices)
@@ -544,9 +554,9 @@ module.exports = {
    * @param {object} groups all the groups
    * @param {object} actionByGroup the action that will be done for each group
    */
-  displaySummary (groups, actionByGroup) {
+  displaySummary: function (groups, actionByGroup) {
     display.title(MESSAGES.SUMMARY)
-    for (let groupName in groups) {
+    for (var groupName in groups) {
       display.message(this.getSummaryByGroup(groupName, groups[groupName], actionByGroup[groupName]))
     }
   },
@@ -557,7 +567,7 @@ module.exports = {
    * @param {string} action the action to do on the group
    * @returns {string} a summary for a group
    */
-  getSummaryByGroup (name, group, action) {
+  getSummaryByGroup: function (name, group, action) {
     if (name && group && action) {
       return actionHandler.toString(action) + ' ' + groupHandler.toString(name, group)
     }

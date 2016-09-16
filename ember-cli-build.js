@@ -14,7 +14,5 @@ module.exports = function (defaults) {
     }
   })
 
-  app.import('bower_components/sinonjs/sinon.js')
-
   return app.toTree()
 }

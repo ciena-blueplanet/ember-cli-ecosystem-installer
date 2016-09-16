@@ -1,3 +1,8 @@
+# 0.8.1
+* Enable coveralls coverage
+
+
+
 # 0.8.0
 * Change build, coverage and npm tag reference
 

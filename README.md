@@ -1,11 +1,11 @@
-[ci-img]: https://img.shields.io/travis/ciena-blueplanet/ember-cli-ecoystem-installer.svg "Travis CI Build Status"
-[ci-url]: https://travis-ci.org/ciena-blueplanet/ember-cli-ecoystem-installer
+[ci-img]: https://img.shields.io/travis/ciena-blueplanet/ember-cli-ecosystem-installer.svg "Travis CI Build Status"
+[ci-url]: https://travis-ci.org/ciena-blueplanet/ember-cli-ecosystem-installer
 
-[cov-img]: https://img.shields.io/coveralls/ciena-blueplanet/ember-cli-ecoystem-installer.svg "Coveralls Code Coverage"
-[cov-url]: https://coveralls.io/github/ciena-blueplanet/ember-cli-ecoystem-installer
+[cov-img]: https://img.shields.io/coveralls/ciena-blueplanet/ember-cli-ecosystem-installer.svg "Coveralls Code Coverage"
+[cov-url]: https://coveralls.io/github/ciena-blueplanet/ember-cli-ecosystem-installer
 
-[npm-img]: https://img.shields.io/npm/v/ember-cli-ecoystem-installer.svg "NPM Version"
-[npm-url]: https://www.npmjs.com/package/ember-cli-ecoystem-installer
+[npm-img]: https://img.shields.io/npm/v/ember-cli-ecosystem-installer.svg "NPM Version"
+[npm-url]: https://www.npmjs.com/package/ember-cli-ecosystem-installer
 
 [![Travis][ci-img]][ci-url] [![Coveralls][cov-img]][cov-url] [![NPM][npm-img]][npm-url]
 

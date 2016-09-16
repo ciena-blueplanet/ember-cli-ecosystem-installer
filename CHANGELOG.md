@@ -1,3 +1,8 @@
+# 0.7.1
+* Change repo in package.json
+
+
+
 # 0.7.0
 * Rename the repository from ember-frost-lts to ember-cli-ecosystem-installer
 

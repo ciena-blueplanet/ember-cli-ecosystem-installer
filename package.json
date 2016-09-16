@@ -13,7 +13,7 @@
     "utest": "mocha node-tests --recursive",
     "lint": "eslint *.js addon app blueprints config tests"
   },
-  "repository": "git@github.com:ciena-frost/ember-ecli-ecosystem-installer.git",
+  "repository": "git@github.com:ciena-blueplanet/ember-ecli-ecosystem-installer.git",
   "engines": {
     "node": ">= 5.0.0"
   },

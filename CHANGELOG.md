@@ -1,3 +1,8 @@
+# 0.9.2
+* Move dependencies to avoid user of the package to install those
+
+
+
 # 0.9.1
 * Update repo description
 

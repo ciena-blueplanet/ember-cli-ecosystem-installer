@@ -25,8 +25,9 @@ addons:
     - g++-4.8
 env:
   matrix:
-  - CXX=g++-4.8
+  - EMBER_TRY_SCENARIO=default
   global:
+    - CXX=g++-4.8
     secure: XPuco3ZXQaF70c4zLfR1SLAQqtm8E6JQ9yxdZl5yu+ywcxSKoNJ2pahNmy08HKmfRb9Cct82lQ1hGW00iVTIqFUWLiYxUmt91/WShB1hWjwcTxTckD4tvHUgaOYzeTIdZG3Y9xehgkWgP4FBfx/eTmdfzakDD24Y31q5FOWyEzER4hrYXrXEpga0PRp90OfxcurALShVc8PSz6tvGtt4Y66iUnh96AnoKzIOZ7ozK+qhmsOel35rNGs6bAw4fvCfFSe0bfxvUN1xYUXRZoJWxIOu8RrqyqNCl2ELbRwl4co+/teU9h3cK7ldxaErB+5V+8C6hF0U0vymxogDwS+uaqYlv+EPqqFkY1L+I82RC+afxYPhyXzp0DNWVasTyyJ+VUlOgRXbNmPTNUlaG3Hr5VWD7n38wjuTk0OoqsA7fWVQTNLLGA5kSUZNQCgvbGQoFQvQgFP23YrhzeE2FfBVeSqPRRsHXJFoqHlipnLTeMg7XPyorFdwKiR5Bs8r7e52vm6YuHmwYglm6yzJQR4KusyrJvcEfLbsa/MMUOUKBrcJH/sAexmmQVJn5rhwKvvIpi01bj1iaB0aR+gzIjDGp6A/NjiamHsGoSwVTDWH7ABaQvhsCCzvz3jF5WS/Mn29E1t0xYwSQHYhefKzXghTiNfWnpwHTlehupfsFf0eMmQ=
 before_deploy:
 - pr-bumper bump

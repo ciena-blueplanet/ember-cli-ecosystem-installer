@@ -1,3 +1,7 @@
+# 0.7.2
+* Fix build, coverage and npm tags
+* Add coverage
+
 # 0.7.1
 * Change repo in package.json
 

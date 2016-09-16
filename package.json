@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-ecosystem-installer",
-  "version": "0.7.4",
+  "version": "0.7.3",
   "description": "The default blueprint for ember-cli addons.",
   "directories": {
     "doc": "doc",

@@ -1,3 +1,7 @@
+# 0.8.0
+* Change build, coverage and npm tag reference
+
+
 # 0.7.2
 * Fix build, coverage and npm tags
 * Add coverage

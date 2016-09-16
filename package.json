@@ -1,7 +1,7 @@
 {
   "name": "ember-cli-ecosystem-installer",
   "version": "0.7.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "Tool to install/uninstall the LTS ecosystem packages.",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -39,7 +39,6 @@
     "ember-export-application-global": "^1.0.4",
     "ember-load-initializers": "^0.5.0",
     "ember-resolver": "^2.0.3",
-    "ember-truth-helpers": "^1.2.0",
     "eslint": "^3.0.1",
     "eslint-config-frost-standard": "^3.0.0",
     "figures": "^1.7.0",

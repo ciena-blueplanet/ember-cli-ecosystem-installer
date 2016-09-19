@@ -11,10 +11,10 @@
 
 # ember-cli-ecosystem-installer
 
- * [Description](#Description)
- * [Usage](#Usage)
- * [QA](#QA)
- * [Development](#Development)
+ * [Description](#description)
+ * [Usage](#usage)
+ * [QA](#qa)
+ * [Development](#development)
 
 ## Description
 Tool to install/uninstall the ecosystem packages.

@@ -234,27 +234,29 @@ There is a few basic concepts to understand before adding features/fixing issues
 2. We are getting the state of the groups based on the state of the packages that composed that group. Here is a table
    with the expected states:
    
-   | Packages state    | Group state |
-   |-------------------|-------------|
-   | New               | New         |
-   | Need update       | Need update |
-   | Installed         | Installed   |
-   | New + need update | Need update |
-   | New + installed   | Need update |
-   | Installed         | Need update |
+   * Packages state => Group state
+     * New => New
+     * Need update => Need update
+     * Installed => Installed
+     * New + need update => Need update
+     * New + installed => Need update
+     * Installed => Need update
 
 3. The operations/actions we are doing on a package/group depends on the step and on the selection.
    
    In the first step, **LTS features install/uninstall**
-   | State | Action (selected) | Action (not selected) |
-   |-------|----------------------|------------------------------|
-   | New | Overwrite | Skip |
-   | Need update | Overwrite | Skip |
-   | Installed | Overwrite | Remove (uninstall)
+   * State => Action (selected)
+     * New => Overwrite
+     * Need update => Overwrite
+     * installed => Overwrite
+   * State => Action (not selected)
+     * New => Skip
+     * Need update => Skip
+     * Installed => Remove (uninstall)
 
    In the second step, **application specific packages keep/uninstall** (packages not in the LTS)
-   | State | Action (selected) | Action (not selected) |
-   |-------|----------------------|------------------------------|
-   | Installed | Identical (keep) | Remove (uninstall)
-
+   * State => Action (selected)
+     * Installed => Identical (kee)
+   * StateAction (not selected)
+     * Installed => Remove (uninstall)
 

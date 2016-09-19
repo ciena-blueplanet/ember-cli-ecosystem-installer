@@ -11,8 +11,9 @@
 
 # ember-cli-ecosystem-installer
 
- * [Installation](#Installation)
+ * [Description](#Description)
  * [Usage](#Usage)
+ * [QA](#QA)
  * [Development](#Development)
 
 ## Description
@@ -56,7 +57,7 @@ the ecosystem.
 ```
 We recommend to add this addon to a repository to be able to version your LTS ecosystem file.
 ```
-2. Add an LTS file (`lts.json`) at the root of your new addon and add the ecosystem content **(see file format below)**
+2. Add an LTS file (`lts.json`) at the root of your new addon and add the ecosystem content **([File format](#LTS-file-format))**
 3. Add the following keyword in your package.json: `ember-cli-ecosystem-lts`
 ```json
   "keywords": [

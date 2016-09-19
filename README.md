@@ -127,7 +127,7 @@ You can specify a package that is part of the ecosystem like this
 You can specify a group of packages that is part of the ecosystem like this
 ```json
 {
-  "group-name" {
+  "group-name": {
     "packages": {
       "package-name-1": "target1",
       "package-name-2": "target2",
@@ -142,7 +142,7 @@ Every packages and group are optional by default. You can specify mandatory pack
 {
   "mandatory": {
     "package-name": "target",
-    "group-name" {
+    "group-name": {
       "packages": {
         "package-name-1": "target1",
         "package-name-2": "target2",
@@ -159,7 +159,7 @@ A group is install or uninstall in totality. You cannot install individual piece
 {
   "mandatory": {
     "package1": "1.0.0",
-    "group1" {
+    "group1": {
       "packages": {
         "package2": "~1.0.0",
         "package3": "^1.0.0",
@@ -167,7 +167,7 @@ A group is install or uninstall in totality. You cannot install individual piece
     }
   },
   "package4": "2.1.2",
-  "group2" {
+  "group2": {
     "packages": {
       "package5": "1.2.20"
     }

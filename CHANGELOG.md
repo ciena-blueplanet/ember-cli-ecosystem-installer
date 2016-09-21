@@ -1,3 +1,9 @@
+# 0.10.0
+* Document addon
+* Fix #2 
+* Fix #30 
+
+
 # 0.9.2
 * Move dependencies to avoid user of the package to install those
 

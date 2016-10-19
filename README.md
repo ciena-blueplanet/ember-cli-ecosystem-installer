@@ -59,6 +59,7 @@ the ecosystem.
     ```
 1. Add an LTS file (`lts.json`) at the root of your new addon and add the ecosystem content **([File format](#lts-file-format))**
 1. Add the following keyword in your package.json: `ember-cli-ecosystem-lts`
+   
     ```json
       "keywords": [
         ...
@@ -67,10 +68,12 @@ the ecosystem.
       ],
     ```
 1. Create a blueprint for your addon
+    
     ```bash
     ember g blueprint <addon-name>
     ```
 1. Go to `/blueprints/<addon-name>/index.js` and add the following
+    
     ```javascript
       ...
       normalizeEntityName: function () {

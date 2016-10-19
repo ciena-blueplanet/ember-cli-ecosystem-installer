@@ -54,35 +54,35 @@ You can follow the steps to create an addon that will contain your LTS ecosystem
 the ecosystem.
 
 1. Create an Ember addon to contain your LTS ecosystem file
-```
-We recommend to add this addon to a repository to be able to version your LTS ecosystem file.
-```
-2. Add an LTS file (`lts.json`) at the root of your new addon and add the ecosystem content **([File format](#lts-file-format))**
-3. Add the following keyword in your package.json: `ember-cli-ecosystem-lts`
-```json
-  "keywords": [
-    ...
-    "ember-cli-ecosystem-lts",
-    ...
-  ],
-```
-4. Create a blueprint for your addon
-```bash
-ember g blueprint <addon-name>
-```
-5. Go to `/blueprints/<addon-name>/index.js` and add the following
-```javascript
-  ...
-  normalizeEntityName: function () {
-    // this prevents an error when the entityName is
-    // not specified (since that doesn't actually matter
-    // to us
-  },
-  afterInstall: function () {
-    return this.addAddonsToProject({ packages: [{name: 'ember-cli-ecosystem-installer'}] })
-  }
-  ...
-```
+    ```
+    We recommend to add this addon to a repository to be able to version your LTS ecosystem file.
+    ```
+1. Add an LTS file (`lts.json`) at the root of your new addon and add the ecosystem content **([File format](#lts-file-format))**
+1. Add the following keyword in your package.json: `ember-cli-ecosystem-lts`
+    ```json
+      "keywords": [
+        ...
+        "ember-cli-ecosystem-lts",
+        ...
+      ],
+    ```
+1. Create a blueprint for your addon
+    ```bash
+    ember g blueprint <addon-name>
+    ```
+1. Go to `/blueprints/<addon-name>/index.js` and add the following
+    ```javascript
+      ...
+      normalizeEntityName: function () {
+        // this prevents an error when the entityName is
+        // not specified (since that doesn't actually matter
+        // to us
+      },
+      afterInstall: function () {
+        return this.addAddonsToProject({ packages: [{name: 'ember-cli-ecosystem-installer'}] })
+      }
+      ...
+    ```
 ### Install the ecosystem
 
 Once these steps are done you will simply have install your addon in the target application:
@@ -93,23 +93,20 @@ ember install <addon-name>
 
 This command will do the following:
 1. Start the installation of your addon on the application and copy the `lts.json` file.
-2. Run your blueprint and install the `ember-cli-ecosystem-installer` tool.
-3. The tool will read the `package.json` file of your target application and get the name of all the packages that contains the
+1. Run your blueprint and install the `ember-cli-ecosystem-installer` tool.
+1. The tool will read the `package.json` file of your target application and get the name of all the packages that contains the
    keyword `ember-cli-ecosystem-lts`
-4. The tool will get the `lts.json` file for each package that contains that keyword and merge all the LTS files. The 
+1. The tool will get the `lts.json` file for each package that contains that keyword and merge all the LTS files. The 
    merged result is the LTS ecosystem content.
-5. The tool will finally prompt the user to install the ecosystem content.
-   ```
-   On the install of ember-cli-ecosystem-installer the user will be requested to:
-   1. Select LTS ecosystem features(packages/groups of packages) to install/uninstall
-   2. Confirm the selection
-   3. Select the application specific packages to keep/uninstall
-   4. Confirm the selection
-
-   Once the user selections are confirmed:
-   5. Uninstall packages
-   6. Install packages
-   ```
+1. The tool will finally prompt the user to install the ecosystem content.
+    * On the install of ember-cli-ecosystem-installer the user will be requested to:
+      1. Select LTS ecosystem features(packages/groups of packages) to install/uninstall
+      1. Confirm the selection
+      1. Select the application specific packages to keep/uninstall
+      1. Confirm the selection
+    * Once the user selections are confirmed:
+      1. Uninstall packages
+      1. Install packages
 
 ### LTS file format
 

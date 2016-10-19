@@ -1,3 +1,6 @@
+# 0.10.1
+* Fix readme file
+
 # 0.10.0
 * Document addon
 * Fix #2 

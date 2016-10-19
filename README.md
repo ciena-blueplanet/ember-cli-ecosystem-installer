@@ -86,6 +86,7 @@ the ecosystem.
       }
       ...
     ```
+
 ### Install the ecosystem
 
 Once these steps are done you will simply have install your addon in the target application:
@@ -95,6 +96,7 @@ ember install <addon-name>
 ```
 
 This command will do the following:
+
 1. Start the installation of your addon on the application and copy the `lts.json` file.
 1. Run your blueprint and install the `ember-cli-ecosystem-installer` tool.
 1. The tool will read the `package.json` file of your target application and get the name of all the packages that contains the

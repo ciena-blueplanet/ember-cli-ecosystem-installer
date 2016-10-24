@@ -1,3 +1,10 @@
+# 0.11.0
+* **Remove** all the package from lts since they were only there for testing purposes.
+* **Fix** when there is no attribute call `keyword` in `package.json`
+* **Fix** when there is no `ember` addon to install
+* **Fix** when we are doing an `npm view` on a `~` or `^` we were getting multiple packages back. We are now removing the `~` and `^` to get only one package.
+
+
 # 0.10.1
 * Fix readme file
 

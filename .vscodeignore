@@ -6,5 +6,5 @@ node_modules/**
 bower_components/**
 .sass-cache/**
 connect.lock/**
-coverage/*/**
+coverage/**
 libpeerconnection.log

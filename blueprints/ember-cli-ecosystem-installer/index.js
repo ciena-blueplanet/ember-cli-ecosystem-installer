@@ -185,7 +185,10 @@ module.exports = {
             }
           })
 
-          var addAddonsPromise = self.addAddonsToProject({ packages: addons })
+          var addAddonsPromise
+          if (!_.isEmpty(addons)) {
+            addAddonsPromise = self.addAddonsToProject({ packages: addons })
+          }
           var addPkgsPromise
           if (!_.isEmpty(nonAddons)) {
             addPkgsPromise = self.addPackagesToProject(nonAddons)
@@ -203,7 +206,7 @@ module.exports = {
    * @returns {boolean} true if the package is an addon and false otherwise
    */
   isAddon: function (pkgInfo) {
-    return pkgInfo.keywords.indexOf('ember-addon') > -1
+    return pkgInfo.keywords && pkgInfo.keywords.indexOf('ember-addon') > -1
   },
 
   /**
@@ -214,7 +217,8 @@ module.exports = {
   getPkgsInfo: function (packages) {
     var promises = []
     packages.forEach(function (pkg) {
-      promises.push(npm.view(packageHandler.toString(pkg.name, pkg)))
+      var pkgToStr = packageHandler.toString(pkg.name, pkg).replace(/[\^~]/g, '')
+      promises.push(npm.view(pkgToStr))
     })
     return promises
   },

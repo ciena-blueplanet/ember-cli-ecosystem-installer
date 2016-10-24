@@ -104,7 +104,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
   it('Single package', function () {
     var args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/single-package-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
-      userInputRecommendGroups: ['ember-prop-types'],
+      userInputRecommendGroups: ['ember-frost-sidebar'],
       userInputOtherGroups: otherPkgsToSelectByDefaylt,
       confirmSelection: 'y'
     })
@@ -114,7 +114,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
       .then(function () {
         expect(packagesToInstall)
           .to.have.lengthOf(1)
-          .to.contain('ember-prop-types@~3.0.0')
+          .to.contain('ember-frost-sidebar@^1.0.0')
       })
   })
 

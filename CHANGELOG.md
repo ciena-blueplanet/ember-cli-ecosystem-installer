@@ -1,3 +1,7 @@
+# 2.0.0
+* Enable non exact target
+
+
 # 1.0.0
 * Revert changes done in the last PRs
 * Implement a custom addAddonsToProject hook based on `ember-cli` source

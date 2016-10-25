@@ -1,3 +1,8 @@
+# 0.13.1
+* Try to fix issues with dependencies installation to keep target (not an exact version)
+
+
+
 # 0.13.0
 * Install the dependencies with `addPackagesToProject` and `addAddonsToProject` to avoid problem with the exact version set for `addAddonsToProject`
 

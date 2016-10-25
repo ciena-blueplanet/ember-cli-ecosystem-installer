@@ -187,7 +187,7 @@ module.exports = {
 
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
-            addAddonsPromise = self.addAddonsToProject({ packages: addons })
+            addAddonsPromise = self.addAddonsToProject({ packages: addons, saveDev: true })
           }
           var addPkgsPromise
           if (!_.isEmpty(nonAddons)) {

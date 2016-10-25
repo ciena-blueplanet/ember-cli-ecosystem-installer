@@ -188,15 +188,15 @@ module.exports = {
           if (!_.isEmpty(allPkgs)) {
             addPkgsPromise = self.addPackagesToProject(allPkgs)
           }
-          var addAddonsPromise
-          if (!_.isEmpty(addons)) {
-            addAddonsPromise = self.addAddonsToProject({ packages: addons })
-          }
+          // var addAddonsPromise
+          // if (!_.isEmpty(addons)) {
+          //   addAddonsPromise = self.addAddonsToProject({ packages: addons })
+          // }
 
-          return Promise.resolve(addAddonsPromise)
-            .then(function () {
-              return Promise.resolve(addPkgsPromise)
-            })
+          // return Promise.resolve(addAddonsPromise)
+            // .then(function () {
+          return Promise.resolve(addPkgsPromise)
+            // })
         })
       }
     }

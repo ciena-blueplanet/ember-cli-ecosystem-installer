@@ -1,3 +1,8 @@
+# 0.12.0
+* Install the dependencies as defined in the lts file (including ^ or ~ in package.json)
+
+
+
 # 0.11.0
 * **Remove** all the package from lts since they were only there for testing purposes.
 * **Fix** when there is no attribute call `keyword` in `package.json`

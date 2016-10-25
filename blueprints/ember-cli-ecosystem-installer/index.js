@@ -193,7 +193,10 @@ module.exports = {
             addAddonsPromise = self.addAddonsToProject({ packages: addons })
           }
 
-          return Promise.all([addAddonsPromise, addPkgsPromise])
+          return Promise.resolve(addAddonsPromise)
+            .then(function () {
+              return Promise.resolve(addPkgsPromise)
+            })
         })
       }
     }

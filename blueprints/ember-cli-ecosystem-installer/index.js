@@ -175,23 +175,22 @@ module.exports = {
           display.message(MESSAGES.CHECKED_PACKAGES)
 
           var addons = []
-          var nonAddons = []
+          var allPkgs = []
           results.forEach(function (result) {
             var pkg = packagesToInstallByName[result.name]
             if (self.isAddon(result)) {
               addons.push(pkg)
-            } else {
-              nonAddons.push(pkg)
             }
+            allPkgs.push(pkg)
           })
 
+          var addPkgsPromise
+          if (!_.isEmpty(allPkgs)) {
+            addPkgsPromise = self.addPackagesToProject(allPkgs)
+          }
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
             addAddonsPromise = self.addAddonsToProject({ packages: addons })
-          }
-          var addPkgsPromise
-          if (!_.isEmpty(nonAddons)) {
-            addPkgsPromise = self.addPackagesToProject(nonAddons.concat(addons))
           }
 
           return Promise.all([addAddonsPromise, addPkgsPromise])

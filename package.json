@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-ecosystem-installer",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "Tool to install/uninstall the LTS ecosystem packages",
   "directories": {
     "doc": "doc",

@@ -1,3 +1,8 @@
+# 0.13.2
+* Make sure that addon install is done before package install
+
+
+
 # 0.13.1
 * Try to fix issues with dependencies installation to keep target (not an exact version)
 

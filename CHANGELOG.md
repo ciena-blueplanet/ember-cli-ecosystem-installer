@@ -1,3 +1,7 @@
+# 2.0.1
+* try forcing save-dev: true and save-exact: false
+
+
 # 2.0.0
 * Enable non exact target
 

@@ -1,3 +1,8 @@
+# 1.0.0
+* Revert changes done in the last PRs
+* Implement a custom addAddonsToProject hook based on `ember-cli` source
+
+
 # 0.13.3
 No CHANGELOG section found in Pull Request description.
 Use a `# CHANGELOG` section in your Pull Request description to auto-populate the `CHANGELOG.md`

@@ -15,6 +15,7 @@ var stateHandler = require('../../lib/models/state')
 var statesEnum = stateHandler.statesEnum
 var npm = require('../../lib/utils/npm')
 var display = require('../../lib/ui/display')
+var blueprint = require('../../lib/ember-cli-libs/models/blueprint')
 
 var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
@@ -175,28 +176,26 @@ module.exports = {
           display.message(MESSAGES.CHECKED_PACKAGES)
 
           var addons = []
-          var allPkgs = []
+          var nonAddons = []
           results.forEach(function (result) {
             var pkg = packagesToInstallByName[result.name]
             if (self.isAddon(result)) {
               addons.push(pkg)
+            } else {
+              nonAddons.push(pkg)
             }
-            allPkgs.push(pkg)
           })
 
-          var addPkgsPromise
-          if (!_.isEmpty(allPkgs)) {
-            addPkgsPromise = self.addPackagesToProject(allPkgs)
+          var addAddonsPromise
+          if (!_.isEmpty(addons)) {
+            addAddonsPromise = blueprint.addAddonsToProject.call(self, { packages: addons })
           }
-          // var addAddonsPromise
-          // if (!_.isEmpty(addons)) {
-          //   addAddonsPromise = self.addAddonsToProject({ packages: addons })
-          // }
+          var addPkgsPromise
+          if (!_.isEmpty(nonAddons)) {
+            // addPkgsPromise = blueprint.addPackagesToProject(nonAddons)
+          }
 
-          // return Promise.resolve(addAddonsPromise)
-            // .then(function () {
-          return Promise.resolve(addPkgsPromise)
-            // })
+          return Promise.all([addAddonsPromise, addPkgsPromise])
         })
       }
     }

@@ -1,3 +1,8 @@
+# 0.13.0
+* Install the dependencies with `addPackagesToProject` and `addAddonsToProject` to avoid problem with the exact version set for `addAddonsToProject`
+
+
+
 # 0.12.0
 * Install the dependencies as defined in the lts file (including ^ or ~ in package.json)
 

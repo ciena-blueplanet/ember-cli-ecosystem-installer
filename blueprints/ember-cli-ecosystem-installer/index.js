@@ -15,7 +15,7 @@ var stateHandler = require('../../lib/models/state')
 var statesEnum = stateHandler.statesEnum
 var npm = require('../../lib/utils/npm')
 var display = require('../../lib/ui/display')
-var blueprint = require('../../lib/ember-cli-libs/models/blueprint')
+var blueprint2 = require('../../lib/ember-cli-libs/models/blueprint2')
 
 var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
@@ -189,7 +189,7 @@ module.exports = {
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
             // addAddonsPromise = self.addAddonsToProject({ packages: addons, blueprintOptions: { save: true } })
-            addAddonsPromise = blueprint.addAddonsToProject.call(self, {
+            addAddonsPromise = blueprint2.addAddonsToProject2.call(self, {
               packages: addons,
               blueprintOptions: { save: true }
             })

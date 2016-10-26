@@ -189,7 +189,7 @@ module.exports = {
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
             // addAddonsPromise = self.addAddonsToProject({ packages: addons, blueprintOptions: { save: true } })
-            addAddonsPromise = blueprint2.addAddonsToProject2.call(self, {
+            addAddonsPromise = blueprint2.addAddonsToProject2(self, {
               packages: addons,
               blueprintOptions: { save: true }
             })

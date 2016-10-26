@@ -191,7 +191,7 @@ module.exports = {
             // addAddonsPromise = self.addAddonsToProject({ packages: addons, blueprintOptions: { save: true } })
             addAddonsPromise = blueprint2.addAddonsToProject2.call(self, {
               packages: addons,
-              blueprintOptions: { save: true }
+              blueprintOptions: { saveExact: false }
             })
           }
           var addPkgsPromise

@@ -1,3 +1,5 @@
+var blueprint2 = require('../../lib/ember-cli-libs/models/blueprint2')
+
 module.exports = {
   description: 'Install requested packages',
   availableOptions: [
@@ -15,6 +17,9 @@ module.exports = {
   },
 
   afterInstall: function (options) {
-    return this.addAddonsToProject({ packages: [{name: 'ember-prop-types@^3.0.0'}] })
+    return blueprint2.addAddonsToProject2.call(this, {
+      packages: [{name: 'ember-prop-types@^3.0.0'}],
+      blueprintOptions: { saveExact: false, saveDev: true }
+    })
   }
 }

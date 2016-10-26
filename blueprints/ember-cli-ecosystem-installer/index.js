@@ -189,11 +189,11 @@ module.exports = {
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
             // addAddonsPromise = self.addAddonsToProject({ packages: addons })
-            addAddonsPromise = blueprint.addAddonsToProject.call(self, { packages: addons, saveExact: false })
+            addAddonsPromise = blueprint.addAddonsToProject.call(self, { packages: addons })
           }
           var addPkgsPromise
           if (!_.isEmpty(nonAddons)) {
-            addPkgsPromise = self.addPackagesToProject(nonAddons)
+            addPkgsPromise = blueprint.addPackagesToProject(nonAddons)
           }
 
           return Promise.all([addAddonsPromise, addPkgsPromise])

@@ -24,13 +24,11 @@ module.exports = {
       blueprintOptions: { saveExact: false, saveDev: true }
     }).then(function () {
       var path = options.target + '/package.json'
-      return fsProm.readJsonAsync(path, function (data) {
-        var pkgJson = JSON.parse(data)
-        var aPkg = { name: 'ember-prop-types', target: '^3.0.0' }
-        pkgJson.devDependencies[aPkg.name] = aPkg.target
+      var pkgJson = require(path)
+      var aPkg = { name: 'ember-prop-types', target: '^3.0.0' }
+      pkgJson.devDependencies[aPkg.name] = aPkg.target
 
-        return fsProm.outputJsonAsync(path, pkgJson)
-      })
+      return fsProm.outputJsonAsync(path, pkgJson)
     })
   }
 }

@@ -2,6 +2,8 @@
 
 var _ = require('lodash')
 var figures = require('figures')
+var Bluebird = require('bluebird')
+var fsProm = require('fs-extra-promise').usePromise(Bluebird)
 
 var actionHandler = require('../../lib/models/action')
 var actionsEnum = actionHandler.actionsEnum
@@ -15,7 +17,6 @@ var stateHandler = require('../../lib/models/state')
 var statesEnum = stateHandler.statesEnum
 var npm = require('../../lib/utils/npm')
 var display = require('../../lib/ui/display')
-var blueprint2 = require('../../lib/ember-cli-libs/models/blueprint2')
 
 var MESSAGES = {
   QUESTION_RECOMMENDED_GROUPS:
@@ -52,6 +53,7 @@ var QUESTION_CONFIRM = {
 var MANDATORY_TO_STR = 'mandatory'
 
 module.exports = {
+  path: '',
   description: 'Install requested packages',
   availableOptions: [
     {
@@ -75,6 +77,7 @@ module.exports = {
    */
   afterInstall: function (options) {
     this.displayWelcomeTag()
+    this.setPath(options)
     display.title(MESSAGES.INSTALLING_ECOSYSTEM)
     display.title(MESSAGES.LOADING_VALIDATING_ECOSYSTEM_FILES)
     var existingPkgs = externalApplicationUtil.getExistingPkgs(options)
@@ -177,6 +180,7 @@ module.exports = {
 
           var addons = []
           var nonAddons = []
+          var pkgs = []
           results.forEach(function (result) {
             var pkg = packagesToInstallByName[result.name]
             if (self.isAddon(result)) {
@@ -184,23 +188,22 @@ module.exports = {
             } else {
               nonAddons.push(pkg)
             }
+            pkgs.push(pkg)
           })
 
           var addAddonsPromise
           if (!_.isEmpty(addons)) {
-            // addAddonsPromise = self.addAddonsToProject({ packages: addons, blueprintOptions: { save: true } })
-            addAddonsPromise = blueprint2.addAddonsToProject2.call(self, {
-              packages: addons,
-              blueprintOptions: { saveExact: false, saveDev: true }
-            })
+            addAddonsPromise = self.addAddonsToProject({ packages: addons })
           }
           var addPkgsPromise
           if (!_.isEmpty(nonAddons)) {
-            // addPkgsPromise = blueprint.addPackagesToProject(nonAddons)
             addPkgsPromise = self.addPackagesToProject(nonAddons)
           }
 
           return Promise.all([addAddonsPromise, addPkgsPromise])
+            .then(function () {
+              this.updatePkgJsonFile(pkgs)
+            })
         })
       }
     }
@@ -610,5 +613,25 @@ module.exports = {
         groupHandler.toString(name, group) + ' ' +
         ((groupHandler.isDowngrade(group)) ? display.getWarning('Downgrade') : '')
     }
+  },
+
+  setPath: function (options) {
+    this.path = options.target
+  },
+
+  updatePkgJsonFile: function (packages) {
+    var path = this.path + '/package.json'
+    return fsProm.readJsonAsync(path, function (err, data) {
+      if (err) {
+        console.log('Error: ' + err)
+      } else {
+        var pkgJson = JSON.parse(data)
+        packages.forEach((pkg) => {
+          pkgJson[pkg.name] = pkg.target
+        })
+
+        return fsProm.outputJsonAsync(path, pkgJson)
+      }
+    })
   }
 }

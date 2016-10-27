@@ -621,17 +621,10 @@ module.exports = {
 
   updatePkgJsonFile: function (packages) {
     var path = this.path + '/package.json'
-    return fsProm.readJsonAsync(path, function (err, data) {
-      if (err) {
-        console.log('Error: ' + err)
-      } else {
-        var pkgJson = JSON.parse(data)
-        packages.forEach((pkg) => {
-          pkgJson[pkg.name] = pkg.target
-        })
-
-        return fsProm.outputJsonAsync(path, pkgJson)
-      }
+    var pkgJson = require(path)
+    packages.forEach((pkg) => {
+      pkgJson[pkg.name] = pkg.target
     })
+    return fsProm.outputJsonAsync(path, pkgJson)
   }
 }

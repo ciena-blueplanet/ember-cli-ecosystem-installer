@@ -24,7 +24,7 @@ module.exports = {
       blueprintOptions: { saveExact: false, saveDev: true }
     }).then(function () {
       var path = options.target + '/package.json'
-      return fsProm.readJsonAsync(path, function (err, data) {
+      return fsProm.readJsonAsync(path, function (data) {
         var pkgJson = JSON.parse(data)
         var aPkg = { name: 'ember-prop-types', target: '^3.0.0' }
         pkgJson.devDependencies[aPkg.name] = aPkg.target

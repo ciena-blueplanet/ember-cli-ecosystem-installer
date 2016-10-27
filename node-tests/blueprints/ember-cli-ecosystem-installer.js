@@ -86,7 +86,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
     td.reset()
   })
 
-  it.skip('No package to install (empty file)', function () {
+  it('No package to install (empty file)', function () {
     var args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/empty-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
       userInputOtherGroups: otherPkgsToSelectByDefaylt,
@@ -101,7 +101,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
       })
   })
 
-  it.skip('Single package', function () {
+  it('Single package', function () {
     var args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/single-package-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
       userInputRecommendGroups: ['ember-frost-sidebar'],
@@ -118,7 +118,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
       })
   })
 
-  it.skip('Single group', function () {
+  it('Single group', function () {
     var args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/single-group-lts.json']
     td.when(prompt(td.matchers.anything())).thenResolve({
       userInputRecommendGroups: ['package3'],
@@ -135,7 +135,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
       })
   })
 
-  describe.skip('Package and group', function () {
+  describe('Package and group', function () {
     var args
     beforeEach(function () {
       args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/package-group-lts.json']
@@ -547,7 +547,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
     })
   })
 
-  describe.skip('Mandatory', function () {
+  describe('Mandatory', function () {
     var args
     beforeEach(function () {
       args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/package-group-lts-mandatory.json']
@@ -614,7 +614,7 @@ describe('Acceptance: ember generate ember-cli-ecosystem-installer', function ()
     })
   })
 
-  describe.skip('Mandatory + Optional', function () {
+  describe('Mandatory + Optional', function () {
     var args
     beforeEach(function () {
       args = ['ember-cli-ecosystem-installer', '--lts-file=node-tests/mock/package-group-lts-mandatory-optional.json']

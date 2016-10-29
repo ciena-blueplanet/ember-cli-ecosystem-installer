@@ -1,3 +1,8 @@
+# 2.0.24
+* Fix issue with non (^|~)x.x.x target during the gathering of the current state 
+
+
+
 # 2.0.23
 * Clean the content of the lts file (was there for testing purposes)
 

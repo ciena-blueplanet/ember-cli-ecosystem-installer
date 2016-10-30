@@ -1,3 +1,7 @@
+# 2.0.26
+* Try to figure out why, installer package not in `package.json`
+
+
 # 2.0.25
 * Fix issue #69 - Fix name and duplicate dependencies
 

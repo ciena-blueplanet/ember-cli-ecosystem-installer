@@ -184,11 +184,11 @@ module.exports = {
           results.forEach(function (result) {
             var pkg = packagesToInstallByName[result.name]
             if (self.isAddon(result)) {
-              addons.push(pkg)
+              addons.push(packageHandler.clone(pkg))
             } else {
-              nonAddons.push(pkg)
+              nonAddons.push(packageHandler.clone(pkg))
             }
-            pkgs.push(pkg)
+            pkgs.push(packageHandler.clone(pkg))
           })
 
           var addAddonsPromise

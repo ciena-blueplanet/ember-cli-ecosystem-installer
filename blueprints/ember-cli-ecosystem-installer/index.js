@@ -94,20 +94,25 @@ module.exports = {
         if (otherGroupsPromise) {
           return otherGroupsPromise.then(function (otherPackagesToModify) {
             var pkgsToModify = _.mergeWith(otherPackagesToModify, recommendedPackagesToModify, objUtil.mergeArray)
-            return self.uninstallAndInstallPkgs(pkgsToModify)
-              .then(function () {
-                var path = this.path + '/package.json'
+            var uninstallAndInstallPromise = self.uninstallAndInstallPkgs(pkgsToModify)
+
+            if (uninstallAndInstallPromise) {
+              return uninstallAndInstallPromise.then(() => {
+                var path = self.path + '/package.json'
                 var pkgJson = require(path)
                 console.log(pkgJson)
               })
+            }
           })
         } else {
-          return self.uninstallAndInstallPkgs(recommendedPackagesToModify)
-            .then(function () {
-              var path = this.path + '/package.json'
+          var uninstallAndInstallPromise = self.uninstallAndInstallPkgs(recommendedPackagesToModify)
+          if (uninstallAndInstallPromise) {
+            return uninstallAndInstallPromise.then(() => {
+              var path = self.path + '/package.json'
               var pkgJson = require(path)
               console.log(pkgJson)
             })
+          }
         }
       })
     } else {
@@ -115,8 +120,8 @@ module.exports = {
       if (otherGroupsPromise) {
         return otherGroupsPromise.then(function (otherPackagesToModify) {
           return self.uninstallAndInstallPkgs(otherPackagesToModify)
-            .then(function () {
-              var path = this.path + '/package.json'
+            .then(() => {
+              var path = self.path + '/package.json'
               var pkgJson = require(path)
               console.log(pkgJson)
             })

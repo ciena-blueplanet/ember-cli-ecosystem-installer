@@ -2,8 +2,8 @@
 
 var _ = require('lodash')
 var figures = require('figures')
-var Bluebird = require('bluebird')
-var fsProm = require('fs-extra-promise').usePromise(Bluebird)
+// var Bluebird = require('bluebird')
+// var fsProm = require('fs-extra-promise').usePromise(Bluebird)
 
 var actionHandler = require('../../lib/models/action')
 var actionsEnum = actionHandler.actionsEnum
@@ -225,10 +225,10 @@ module.exports = {
   /**
    * Update the package.json file with the desired version number (keep semver range format).
    * @param {array} packages a list of packages
-   * @returns {Promise} a promise to update the package file
+  //  * @returns {Promise} a promise to update the package file
    */
   updatePkgJsonFile: function (packages) {
-    var path = this.path + '/package.json'
+    // var path = this.path + '/package.json'
     // var pkgJson = require(path)
     // console.log(pkgJson)
     // if (pkgJson && pkgJson.devDependencies) {

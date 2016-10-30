@@ -105,6 +105,11 @@ module.exports = {
       if (otherGroupsPromise) {
         return otherGroupsPromise.then(function (otherPackagesToModify) {
           return self.uninstallAndInstallPkgs(otherPackagesToModify)
+            .then(function () {
+              var path = this.path + '/package.json'
+              var pkgJson = require(path)
+              console.log(pkgJson)
+            })
         })
       }
     }
@@ -224,14 +229,14 @@ module.exports = {
    */
   updatePkgJsonFile: function (packages) {
     var path = this.path + '/package.json'
-    var pkgJson = require(path)
-    console.log(pkgJson)
-    if (pkgJson && pkgJson.devDependencies) {
-      packages.forEach((pkg) => {
-        pkgJson.devDependencies[pkg.name] = pkg.target
-      })
-      return fsProm.outputJsonAsync(path, pkgJson)
-    }
+    // var pkgJson = require(path)
+    // console.log(pkgJson)
+    // if (pkgJson && pkgJson.devDependencies) {
+    //   packages.forEach((pkg) => {
+    //     pkgJson.devDependencies[pkg.name] = pkg.target
+    //   })
+    //   return fsProm.outputJsonAsync(path, pkgJson)
+    // }
   },
 
   /**

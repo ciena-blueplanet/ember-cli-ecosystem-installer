@@ -1,3 +1,7 @@
+# 2.0.27
+No CHANGELOG section found in Pull Request description.
+Use a `# CHANGELOG` section in your Pull Request description to auto-populate the `CHANGELOG.md`
+
 # 2.0.26
 * Try to figure out why, installer package not in `package.json`
 

@@ -2,8 +2,8 @@
 
 var _ = require('lodash')
 var figures = require('figures')
-// var Bluebird = require('bluebird')
-// var fsProm = require('fs-extra-promise').usePromise(Bluebird)
+var Bluebird = require('bluebird')
+var fsProm = require('fs-extra-promise').usePromise(Bluebird)
 
 var actionHandler = require('../../lib/models/action')
 var actionsEnum = actionHandler.actionsEnum
@@ -94,25 +94,10 @@ module.exports = {
         if (otherGroupsPromise) {
           return otherGroupsPromise.then(function (otherPackagesToModify) {
             var pkgsToModify = _.mergeWith(otherPackagesToModify, recommendedPackagesToModify, objUtil.mergeArray)
-            var uninstallAndInstallPromise = self.uninstallAndInstallPkgs(pkgsToModify)
-
-            if (uninstallAndInstallPromise) {
-              return uninstallAndInstallPromise.then(() => {
-                var path = self.path + '/package.json'
-                var pkgJson = require(path)
-                console.log(pkgJson)
-              })
-            }
+            return self.uninstallAndInstallPkgs(pkgsToModify)
           })
         } else {
-          var uninstallAndInstallPromise = self.uninstallAndInstallPkgs(recommendedPackagesToModify)
-          if (uninstallAndInstallPromise) {
-            return uninstallAndInstallPromise.then(() => {
-              var path = self.path + '/package.json'
-              var pkgJson = require(path)
-              console.log(pkgJson)
-            })
-          }
+          return self.uninstallAndInstallPkgs(recommendedPackagesToModify)
         }
       })
     } else {
@@ -120,11 +105,6 @@ module.exports = {
       if (otherGroupsPromise) {
         return otherGroupsPromise.then(function (otherPackagesToModify) {
           return self.uninstallAndInstallPkgs(otherPackagesToModify)
-            .then(() => {
-              var path = self.path + '/package.json'
-              var pkgJson = require(path)
-              console.log(pkgJson)
-            })
         })
       }
     }
@@ -240,18 +220,19 @@ module.exports = {
   /**
    * Update the package.json file with the desired version number (keep semver range format).
    * @param {array} packages a list of packages
-  //  * @returns {Promise} a promise to update the package file
+   * @returns {Promise} a promise to update the package file
    */
   updatePkgJsonFile: function (packages) {
-    // var path = this.path + '/package.json'
-    // var pkgJson = require(path)
-    // console.log(pkgJson)
-    // if (pkgJson && pkgJson.devDependencies) {
-    //   packages.forEach((pkg) => {
-    //     pkgJson.devDependencies[pkg.name] = pkg.target
-    //   })
-    //   return fsProm.outputJsonAsync(path, pkgJson)
-    // }
+    var path = this.path + '/package.json'
+    delete require.cache[require.resolve(path)]
+    var pkgJson = require(path)
+    console.log(pkgJson)
+    if (pkgJson && pkgJson.devDependencies) {
+      packages.forEach((pkg) => {
+        pkgJson.devDependencies[pkg.name] = pkg.target
+      })
+      return fsProm.outputJsonAsync(path, pkgJson)
+    }
   },
 
   /**

@@ -226,7 +226,6 @@ module.exports = {
     var path = this.path + '/package.json'
     delete require.cache[require.resolve(path)]
     var pkgJson = require(path)
-    console.log(pkgJson)
     if (pkgJson && pkgJson.devDependencies) {
       packages.forEach((pkg) => {
         pkgJson.devDependencies[pkg.name] = pkg.target

@@ -1,3 +1,7 @@
+# 2.0.25
+* Fix issue #69 - Fix name and duplicate dependencies
+
+
 # 2.0.24
 * Fix issue with non (^|~)x.x.x target during the gathering of the current state 
 

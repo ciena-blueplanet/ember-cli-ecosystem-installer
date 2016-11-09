@@ -13,7 +13,7 @@
     "utest": "istanbul cover _mocha node-tests/blueprints/*.js",
     "lint": "eslint *.js addon app blueprints config tests"
   },
-  "repository": "git@github.com:ciena-blueplanet/ember-ecli-ecosystem-installer.git",
+  "repository": "git@github.com:ciena-blueplanet/ember-cli-ecosystem-installer.git",
   "engines": {
     "node": ">= 5.0.0"
   },

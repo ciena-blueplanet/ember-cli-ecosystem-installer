@@ -1,3 +1,7 @@
+# 2.0.30
+- **Fix** issue with caching `package.json`
+
+
 # 2.0.29
 * **Fix** issue with caching `package.json`
 

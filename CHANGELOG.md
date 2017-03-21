@@ -1,3 +1,6 @@
+# 2.0.31 (2017-03-21)
+* **Fixed** version bumping
+
 # 2.0.30
 - **Fix** issue with caching `package.json`
 

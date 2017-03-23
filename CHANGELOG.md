@@ -1,3 +1,7 @@
+# 2.0.32 (2017-03-23)
+* **Order** user input choices
+
+
 # 2.0.31 (2017-03-21)
 * **Fixed** version bumping
 

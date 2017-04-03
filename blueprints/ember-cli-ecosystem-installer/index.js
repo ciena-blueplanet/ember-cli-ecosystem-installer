@@ -323,7 +323,7 @@ module.exports = {
     if (isInUserInput || group.isMandatory) {
       action = actionsEnum.OVERWRITE
     } else {
-      if (group.state === statesEnum.INSTALLED) {
+      if (group.state === statesEnum.INSTALLED && name !== 'ember-cli') {
         action = actionsEnum.REMOVE
       }
     }

@@ -1,3 +1,6 @@
+# 2.0.34 (2017-04-03)
+* **Avoid** uninstalling `ember-cli`
+
 # 2.0.33 (2017-04-03)
 * **Added** missing dependencies
 

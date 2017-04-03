@@ -1,3 +1,6 @@
+# 2.0.33 (2017-04-03)
+* **Added** missing dependencies
+
 # 2.0.32 (2017-03-23)
 * **Order** user input choices
 
